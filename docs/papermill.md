@@ -1,26 +1,58 @@
 # Papermill
 
-把 Jupyter Notebook 变成可参数化、可重复执行的计算单元。
+让 Jupyter Notebook 变成可用不同参数批量执行的参数化计算单元
 
-通过参数注入、执行引擎和多存储后端，把交互式 Notebook 接入可复现的数据与实验流水线。
+适合需要反复跑同一份 notebook 但代入不同参数的数据科学家和研究工程师。把 notebook 中的参数 cell 标记后，用命令行或 Python API 传入新参数值批量执行，输出 notebook 会保留每次运行的元数据和结果。
 
 - 官网详情：https://bolaoshi.cn/research-tools/papermill
 - 原始来源：https://github.com/nteract/papermill
 - 读取版本：e4e4ddd362037309c53ab5230541759707779687
 - 核对日期：2026-07-10
+- GitHub Stars：6,460（2026-07-11）
 - 上游许可：BSD-3-Clause
 - 验证程度：catalogued
 - 编辑判断：recommended
 
-## 适合这些任务
+## 什么时候使用
 
-- 需要批量重复运行 Notebook 的研究者
-- 构建参数扫描和报告流水线的团队
+- 同一个数据分析 notebook 需要用不同日期、参数或数据集反复跑
+- 需要把手工交互 notebook 嵌入自动化数据流水线
+- 想查看 notebook 有哪些参数可调而不必打开文件逐行阅读
+- 需要在 notebook 执行过程中实时落盘，防止长时间运行崩溃丢失结果
 
-## 这些情况要谨慎
+## 先准备什么
 
-- Notebook 本身不可复现的项目
-- 缺少内核和数据依赖管理的环境
+- 一个带有标记为 parameters 的 cell 的 Jupyter notebook
+- Jupyter kernel 运行环境
+- 参数配置文件或命令行参数值
+- 输出 notebook 的保存路径
+- 可选：云存储凭证（S3、Azure、GCS 等）
+
+## 它会怎样推进
+
+1. **标记参数 cell**：在 notebook 中添加 parameters 标签，指定默认参数值
+2. **传入新参数**：通过 CLI 或 Python API 将新的参数值注入 notebook 的参数 cell
+3. **逐 cell 执行**：用指定 kernel 按顺序执行每个 cell，执行过程中实时落盘中间结果
+4. **输出带元数据的 notebook**：生成包含运行时间、参数值、执行状态等完整元数据的输出 notebook
+5. **检查执行结果**：查看输出 notebook 中各 cell 的输出和 papermill 运行元数据
+
+## 第一次这样开始
+
+帮我安装这个库：https://github.com/nteract/papermill
+安装前先告诉我需要什么环境，安装后帮我跑通一个最小示例。
+
+## 结果出来后先看什么
+
+- 输出 notebook 的 papermill metadata 中参数值是否与输入一致
+- 是否有 cell 标记为 failed——每个 cell 的 papermill.status 应确认
+- 长时间运行的任务是否因为 autosave 和逐 cell 落盘保留了中间结果
+- 使用云存储路径时输出是否成功写入目标位置
+
+## 常见误区
+
+- 忘记给 notebook 添加 parameters 标签——没有标记参数 cell 时传入的参数不会被注入
+- 把 papermill 当作替代版本控制的工具——它生成的是带运行结果的 notebook 副本，而不是替代 git 的 notebook 版本管理
+- 在参数 cell 中写复杂逻辑——参数 cell 应该只定义变量，复杂的参数处理逻辑放在后续 cell
 
 ## 能力拆解
 
@@ -144,25 +176,29 @@
 
 ## 处理机制
 
-1. **核心处理链**：把 Jupyter Notebook 变成可参数化、可重复执行的计算单元。
+1. **核心处理链**：让 Jupyter Notebook 变成可用不同参数批量执行的参数化计算单元
 
 ## 开始方式
 
-1. 先整理一个可从头运行的 Notebook
-2. 标记 parameters cell
-3. 用本地输入输出跑通一次
+1. 标记参数 cell：在 notebook 中添加 parameters 标签，指定默认参数值
+2. 传入新参数：通过 CLI 或 Python API 将新的参数值注入 notebook 的参数 cell
+3. 逐 cell 执行：用指定 kernel 按顺序执行每个 cell，执行过程中实时落盘中间结果
+4. 输出带元数据的 notebook：生成包含运行时间、参数值、执行状态等完整元数据的输出 notebook
+5. 检查执行结果：查看输出 notebook 中各 cell 的输出和 papermill 运行元数据
 
 ## 环境要求
 
-- Jupyter kernel
-- Python
-- 明确的数据和环境依赖
+- 一个带有标记为 parameters 的 cell 的 Jupyter notebook
+- Jupyter kernel 运行环境
+- 参数配置文件或命令行参数值
+- 输出 notebook 的保存路径
+- 可选：云存储凭证（S3、Azure、GCS 等）
 
 ## 关键限制
 
-- 本轮未实际运行 Notebook
-- 参数化不能修复隐藏状态
-- 云存储需要额外凭证和依赖
+- 忘记给 notebook 添加 parameters 标签——没有标记参数 cell 时传入的参数不会被注入
+- 把 papermill 当作替代版本控制的工具——它生成的是带运行结果的 notebook 副本，而不是替代 git 的 notebook 版本管理
+- 在参数 cell 中写复杂逻辑——参数 cell 应该只定义变量，复杂的参数处理逻辑放在后续 cell
 
 ## 已核对范围
 

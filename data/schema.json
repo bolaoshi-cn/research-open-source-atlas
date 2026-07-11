@@ -28,6 +28,8 @@
           "websiteUrl",
           "source",
           "license",
+          "guide",
+          "installPrompt",
           "capabilities",
           "limitations",
           "updatedAt"
