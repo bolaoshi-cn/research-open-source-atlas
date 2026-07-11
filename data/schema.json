@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/zhbhlp/research-open-source-atlas/blob/main/data/schema.json",
+  "$id": "https://github.com/bolaoshi-cn/research-open-source-atlas/blob/main/data/schema.json",
   "title": "bo老师科研开源能力图谱",
   "type": "object",
   "required": [
