@@ -1,0 +1,2548 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-07-11T05:38:26.198Z",
+  "website": "https://bolaoshi.cn/research-tools",
+  "repository": "https://github.com/zhbhlp/research-open-source-atlas",
+  "license": "CC-BY-4.0",
+  "items": [
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-paper-qa",
+      "slug": "paper-qa",
+      "name": "PaperQA",
+      "oneLiner": "从本地论文中检索证据并生成可以回到来源的带引用答案。",
+      "summary": "连接文档索引、候选检索、证据汇聚、重排和带引用回答，部分主链已经完成本地小样本验证。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/paper-qa",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/Future-House/paper-qa",
+        "repository": "Future-House/paper-qa",
+        "version": "d7675d7",
+        "checkedAt": "2026-06-12",
+        "checksum": "sha256:5cfbedeed171731c4189627c744be0c81e3fa74f7798a8792019ce2347d50998"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "Apache-2.0",
+        "url": "https://github.com/Future-House/paper-qa/blob/main/LICENSE"
+      },
+      "maturity": "stable",
+      "verification": "verified",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "需要基于本地论文问答的研究者",
+        "重视引用和证据回查的团队"
+      ],
+      "notRecommendedFor": [
+        "希望模型直接替代文献判断的用户",
+        "无法提供模型和 embedding 的环境"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "复用向量存储与缓存",
+          "description": "把已经解析过的 Doc、Text、embedding 和搜索索引，以 Docs、textsindex、Numpy 向量存储、Qdrant collection 或目录索引的形式复用，减少重复解析、重复 embedding 和重复检索准备。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "已解析的 Doc 和 Text 对象。",
+            "embedding 模型输出的向量。",
+            "Docs 对象和可选 textsindex。"
+          ],
+          "outputs": [
+            "可复用的 Docs 对象。",
+            "已填充的 textsindex。",
+            "Numpy 内存向量索引或 Qdrant collection。"
+          ],
+          "humanChecks": [
+            "是否允许持久化原文 chunk、embedding 和 metadata。",
+            "是否把 Qdrant collection 当作长期证据缓存，还是只用于本轮运行。",
+            "是否固定 index name、collection name 和 settings JSON 路径。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "建立本地文档索引",
+          "description": "把本地论文、文本、Office 文档、HTML 或源码文件，转成可复用的 Tantivy 全文搜索索引和可回载的 Docs 对象，使后续 papersearch、search 和 ask 能从本地索引取候选文档。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "本地文件目录或单层文件目录。",
+            "Settings.agent.index.paperdirectory。",
+            "可选 --index 或 Settings.agent.index.name。"
+          ],
+          "outputs": [
+            "SearchIndex 对象。",
+            "index/<indexname/index 下的 Tantivy index。",
+            "index/<indexname/docs 下按 body hash 保存的 Docs 对象。"
+          ],
+          "humanChecks": [
+            "本轮是否允许调用 LLM 推断 citation 和结构化文献字段。",
+            "是否提供 manifest，减少标题、DOI 和作者推断不确定性。",
+            "是否固定 index name，避免配置 hash 变化后出现多个索引。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "搜索临床试验",
+          "description": "把 ClinicalTrials.gov 查询结果转成可进入 Docs 的临床试验文档和搜索元数据，使 agent 能把注册试验作为论文之外的证据类型继续检索、汇聚和回答。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "agent 生成或用户传入的 ClinicalTrials.gov query。",
+            "当前 EnvironmentState.docs。",
+            "Settings.agent.searchcount。"
+          ],
+          "outputs": [
+            "当前 Docs 中新增的临床试验 Text。",
+            "临床试验 DocDetails，docname 和 dockey 通常为 NCT ID。",
+            "一条 search metadata text，记录 query 和 total result count。"
+          ],
+          "humanChecks": [
+            "本轮研究问题是否允许把 clinical trial registry 当作 evidence type。",
+            "是否只搜临床试验，还是允许论文和临床试验混合进入 Docs。",
+            "是否使用 human readable 文本，还是保留原始 JSON。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "搜索候选文献",
+          "description": "把用户问题或 agent 改写后的查询词，转成一组候选论文或本地文档，并加入当前问答状态。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "用户问题。",
+            "agent 生成的一个或多个检索 query。",
+            "可选年份范围。"
+          ],
+          "outputs": [
+            "加入 state.docs 的候选文档。",
+            "当前检索状态文本。",
+            "可选的 retrieved paper metadata。"
+          ],
+          "humanChecks": [
+            "检索 query 是否保留了原研究问题的核心限制。",
+            "检索范围是否只包含本轮允许读取的目录。",
+            "搜索结果是否需要人工排除低相关文档。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "汇聚可引用证据",
+          "description": "把候选文档中的 chunk 文本，转成围绕当前问题的 scored context，并保留 citation 线索。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "当前问题或更具体的证据问题。",
+            "已加入 Docs 的文档和文本 chunk。",
+            "embedding 模型。"
+          ],
+          "outputs": [
+            "PQASession.contexts。",
+            "针对当前问题的 best evidence 文本。",
+            "状态文本中的 evidence count 和 relevant paper count。"
+          ],
+          "humanChecks": [
+            "context 是否真的回答当前问题。",
+            "context 的 citation 是否能回到原文位置。",
+            "证据摘要是否压缩掉关键限定。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "生成带引用答案",
+          "description": "把已汇聚的 evidence contexts 组织成带 in-text citations 的答案，并把答案、原始答案和引用格式化结果保存在 session 中。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "用户问题。",
+            "PQASession.contexts。",
+            "answer LLM。"
+          ],
+          "outputs": [
+            "session.answer。",
+            "session.rawanswer。",
+            "session.formattedanswer。"
+          ],
+          "humanChecks": [
+            "答案主张是否只覆盖 citation 能支撑的范围。",
+            "formatted answer 是否保留了关键来源。",
+            "used contexts 是否和最终答案主张对应。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "从本地论文中检索证据并生成可以回到来源的带引用答案。"
+        }
+      ],
+      "gettingStarted": [
+        "准备少量可合法使用的本地论文",
+        "使用测试模型先验证索引和引用链",
+        "再接入真实模型评估语义排序"
+      ],
+      "requirements": [
+        "Python",
+        "LLM 和 embedding",
+        "本地论文文件"
+      ],
+      "limitations": [
+        "真实外部模型表现仍需核验",
+        "中文引用表现未完成验证",
+        "引用格式不能代替证据质量判断"
+      ],
+      "verifiedScope": [
+        "真实 paper-qa d7675d7 包",
+        "本地临时 txt 文档和目录索引",
+        "本地确定性 stub embedding",
+        "fake agent search query 到 PaperSearch.papersearch",
+        "SearchIndex.query 命中后写入 state.docs",
+        "空索引停止线",
+        "本地临时 txt 文档",
+        "本地 stub summary LLM"
+      ],
+      "unverifiedScope": [
+        "真实外部 LLM 生成检索词的稳定性",
+        "真实 embedding 语义排序",
+        "大规模 PDF 索引",
+        "年份过滤字段行为",
+        "多文献同名或同 DOI 冲突",
+        "中文问题检索表现",
+        "真实 summary LLM 的证据摘要质量",
+        "真实 embedding 下的 MMR 排序"
+      ],
+      "researchStages": [
+        "literature",
+        "validation"
+      ],
+      "tags": [
+        "rag",
+        "证据问答",
+        "论文检索"
+      ],
+      "keywords": [
+        "paperqa",
+        "论文 rag",
+        "带引用答案"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-grobid",
+      "slug": "grobid",
+      "name": "GROBID",
+      "oneLiner": "把学术 PDF 转成带结构、元数据和参考文献的 TEI XML。",
+      "summary": "面向学术出版物的机器学习解析基座，覆盖全文结构、头部元数据、参考文献、坐标和模型训练。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/grobid",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/kermitt2/grobid",
+        "repository": "kermitt2/grobid",
+        "version": "ae58f2dd30e38207d2e4a919663de14f3695b836",
+        "checkedAt": "2026-07-10",
+        "checksum": "sha256:2fc976f016a354d686bf299ad1ad93490de447c4759f448ea58a484ad6690cd1"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "Apache-2.0",
+        "url": "https://github.com/kermitt2/grobid/blob/master/LICENSE"
+      },
+      "maturity": "production",
+      "verification": "catalogued",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "需要批量结构化学术 PDF 的团队",
+        "构建文献数据管线的开发者"
+      ],
+      "notRecommendedFor": [
+        "只处理少量 PDF 的零配置用户",
+        "无法维护 Java 服务和模型资源的环境"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "PDF全文结构化解析",
+          "description": "把学术论文 PDF 完整解析成结构化 TEI XML（header + body + references），通过级联序列标注模型识别文档区域、段落、章节标题、图表、公式和参考文献标记，并可选附加 PDF 坐标、句子分段和页面范围控制。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "input：PDF 文件（multipart 上传或本地路径）",
+            "consolidateHeader / consolidateCitations / consolidateFunders：0/1/2/3 控制元数据归一化程度",
+            "includeRawCitations / includeRawAffiliations / includeRawCopyrights：是否保留原始字符串"
+          ],
+          "outputs": [
+            "PDF全文结构化解析的结构化结果"
+          ],
+          "humanChecks": [
+            "flavor 选择是否匹配文档类型需人工判断。",
+            "坐标正确性依赖 pdfalto 与 PDF CropBox/MediaBox 一致，需人工校对。",
+            "非主流出版商/领域的解析质量需人工复核（训练数据偏向生命科学）。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "PDF坐标标注与增强",
+          "description": "在 PDF 全文解析结果上附加结构坐标（bounding boxes），使提取的结构可定位回原始 PDF 页面，支持三种输出：TEI XML 的 @coords 属性、JSON 标注（含页面尺寸+bounding box 列表，用于浏览器 PDF.js 渲染）、以及实验性的增强 PDF（写入 PDF 注释）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "PDF 文件（需先走 fulltext 或 references 解析）",
+            "teiCoordinates：要附加坐标的结构类型列表（ref/biblStruct/persName/figure/formula/head/s/p/note/title/affiliation）",
+            "consolidateCitations：标注端点是否调外部服务补全 DOI/arXiv 链接"
+          ],
+          "outputs": [
+            "TEI XML：结构带 @coords 属性，<facsimile 声明页面尺寸。",
+            "JSON：{pages: [...], annotations: [{pos: [...], ...}]}。",
+            "增强 PDF：带 goto/link 注释的 PDF 文件。"
+          ],
+          "humanChecks": [
+            "坐标精度（尤其多栏、复杂版面）需人工校对。",
+            "JSON 标注的 bounding box 与浏览器渲染对齐需人工验证。",
+            "增强PDF 的注释正确性需人工检查。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "PDF头部元数据提取",
+          "description": "从 PDF 文档首页区域提取结构化书目元数据（标题、作者、摘要、作者单位、关键词、DOI、日期、版权许可证等），输出 TEI XML 或 BibTeX，并可选通过外部服务归一化补全。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "input：PDF 文件",
+            "consolidateHeader：0（不归一化）/1（归一化并注入全部额外元数据，默认）/2（归一化但仅注入 DOI）/3（仅用已提取 DOI 归一化）",
+            "includeRawAffiliations：0/1 是否保留原始单位地址字符串"
+          ],
+          "outputs": [
+            "PDF头部元数据提取的结构化结果"
+          ],
+          "humanChecks": [
+            "作者名拆分（forename/middle/surname）对非西方名字格式需人工校对。",
+            "单位地址拆分对复杂多机构场景需人工复核。",
+            "consolidation 补全的元数据准确性需人工抽检。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "专利引文提取",
+          "description": "从专利出版物中提取和解析专利引文（patent citations）和非专利引文（non-patent literature citations），支持纯文本（TXT）、ST.36 XML 和 PDF 三种输入格式，输出 TEI XML 引文列表，并对 PDF 输入提供带坐标的 JSON 标注。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "TXT 模式：input（UTF-8 专利文本，application/x-www-form-urlencoded）",
+            "ST36 模式：input（ST.36 标准 XML 文件，multipart/form-data）",
+            "PDF 模式：input（专利 PDF 文件，需有文本层）"
+          ],
+          "outputs": [
+            "专利引文提取的结构化结果"
+          ],
+          "humanChecks": [
+            "专利号标准化（国家代码、docNumber、kind code）准确性需人工校对。",
+            "专利 vs 非专利引文分流准确性需人工复核。",
+            "非主流格式的非专利引文解析质量需人工检查。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "原文片段解析",
+          "description": "把原始文本片段（日期字符串、作者姓名序列、单位地址块、单条/多条引文字符串）独立解析成结构化 TEI XML 片段，不依赖 PDF 上下文，用于集成到其他工作流或单独调用。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "date：原始日期字符串（如 \"September 16th, 2001\"）",
+            "names：作者姓名序列（如 \"John Doe and Jane Smith\"，header 或 citation 上下文）",
+            "affiliations：单位地址块字符串（如 \"Stanford University, California, USA\"）"
+          ],
+          "outputs": [
+            "原文片段解析的结构化结果"
+          ],
+          "humanChecks": [
+            "非西方姓名格式（如中文、日文）的 forename/surname 拆分需人工校对。",
+            "复杂单位地址（多层级机构）的拆分需人工复核。",
+            "非标准日期格式（如 \"Spring 2021\"）的 ISO 标准化需人工确认。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "参考文献外部归一化",
+          "description": "用外部书目服务（CrossRef REST API 或 biblio-glutton）校正和补全 grobid 从 PDF 提取的头部元数据和参考文献，注入 DOI/PMID/PMCID 等身份字段和更完整的书目记录，并通过限流、退避和 post-validation 控制匹配质量和可用性。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "grobid 提取的 BiblioItem（含 raw citation 字符串和已提取字段）",
+            "consolidateMode：0/1/2/3（档位含义见头部元数据卡和参考文献卡）",
+            "配置项（grobid.yaml）："
+          ],
+          "outputs": [
+            "参考文献外部归一化的结构化结果"
+          ],
+          "humanChecks": [
+            "consolidation 补全的元数据准确性需人工抽检（尤其近似匹配）。",
+            "DOI 匹配通常可靠，但 bibliographic 查询的弱匹配需人工复核。",
+            "glutton vs CrossRef 的匹配差异需人工评估。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "把学术 PDF 转成带结构、元数据和参考文献的 TEI XML。"
+        }
+      ],
+      "gettingStarted": [
+        "先使用官方服务或容器跑单篇 PDF",
+        "检查 TEI 字段和参考文献",
+        "再进入批量和并发配置"
+      ],
+      "requirements": [
+        "Java 或 Docker",
+        "模型和 PDF 解析依赖",
+        "足够内存"
+      ],
+      "limitations": [
+        "本轮只完成静态源码核对",
+        "复杂版式和扫描件需要单独评估",
+        "批量运行需控制并发和外部归一化服务"
+      ],
+      "verifiedScope": [
+        "静态确认 FullTextParser.processing 作为全文级联入口",
+        "静态确认级联顺序 segmentation→fulltext→header→reference-segmenter→citation→figure/table",
+        "静态确认 pdfalto 产出 LayoutToken（含坐标+字体），模型在 LayoutToken 上做序列标注而非纯文本",
+        "静态确认 REST /api/processFulltextDocument 和 batch processFullText 两条入口",
+        "静态确认 TEI XML 输出合同和可选坐标/句子分段/页面范围参数",
+        "静态确认 teiCoordinates 参数支持 ref/biblStruct/persName/figure/formula/head/s/p/note/title/affiliation 等结构附带坐标",
+        "静态确认 referenceAnnotations 端点返回 JSON 标注（含页面尺寸 + bounding box 列表）",
+        "静态确认 annotatePDF 端点返回修改后的 PDF（实验性，可能弃用）"
+      ],
+      "unverifiedScope": [
+        "pdfalto 原生二进制内部解析细节未深读",
+        "各模型 Wapiti/DeLFT 内部推理链路未深读",
+        "flavor（article/light-ref/sdo）对具体标注规则的影响未深读",
+        "大文件/超大 blocks 的降级阈值实际触发行为未验证",
+        "坐标计算的精度和 CropBox/MediaBox 差异处理未验证",
+        "JSON 标注的完整 schema（哪些字段进入 annotations）未深读",
+        "annotatePDF 的 PDF 修改内部实现未深读",
+        "figure/formula 标注的覆盖率和准确性未验证"
+      ],
+      "researchStages": [
+        "literature"
+      ],
+      "tags": [
+        "pdf 解析",
+        "tei xml",
+        "文献基础设施"
+      ],
+      "keywords": [
+        "grobid",
+        "学术 pdf 解析",
+        "参考文献提取"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-causalpy",
+      "slug": "causalpy",
+      "name": "CausalPy",
+      "oneLiner": "用统一接口完成常见准实验因果估计、诊断和报告。",
+      "summary": "PyMC Labs 维护的准实验因果推断库，连接识别策略、反事实构造、不确定性量化和稳健性诊断。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/causalpy",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/pymc-labs/CausalPy",
+        "repository": "pymc-labs/CausalPy",
+        "version": "642f177d345bd65ad739e8a425ddbdf9faf6e2b1",
+        "checkedAt": "2026-07-10",
+        "checksum": "sha256:c58c49c533382397f2bb5c75d6bae344b7782b6256b8b099b1a5773508f26719"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "Apache-2.0",
+        "url": "https://github.com/pymc-labs/CausalPy/blob/main/LICENSE"
+      },
+      "maturity": "stable",
+      "verification": "catalogued",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "使用 DiD、合成控制或断点回归的研究者",
+        "需要贝叶斯不确定性报告的用户"
+      ],
+      "notRecommendedFor": [
+        "尚未明确识别策略的研究任务",
+        "只想快速得到单个效应数字的用户"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "准实验因果效应估计",
+          "description": "给定一个准实验设计（阈值规则、政策冲击、交错采用、地理对照、工具变量或无法随机化的选择场景）和对应的观测面板或时间序列数据，估计干预的因果效应，产出反事实预测、因果 impact（observed − counterfactual）和带不确定性的效应估计，让研究者把\"识别策略\"映射到正确的准实验方法。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "DataFrame（面板或时间序列，index 强制改名为 obsind）。",
+            "patsy 公式（formula），描述 outcome 与 predictors/交互项关系（DiD/RD/RKink/ITS/IPW）。",
+            "设计参数（因方法而异）：treatmentthreshold（RD）、treatmenttime/treatmentendtime（ITS/SC）、controlunits/treatedunits（SC/SDiD）、instrumentsformula/instrumentsdata（IV）、weightingscheme（IPW）、unitvariablename/timevariablename/treatmenttimevariablename（Staggered DiD）、bandwidth/donuthole（RD）、groupvariablename/pretreatmentvariablename（PrePostNEGD）。"
+          ],
+          "outputs": [
+            "causalimpact（DiD/RD：标量后验 DataArray chain×draw；ITS/SC：postimpact obsind×chain×draw）。",
+            "ypredcounterfactual/ypredcontrol/ypredtreatment（预测 dict，贝叶斯含 posteriorpredictive.mu）。",
+            "discontinuityatthreshold（RD）、gradientchange（RKink）。"
+          ],
+          "humanChecks": [
+            "识别策略是否匹配设计：阈值规则→RD、政策冲击→ITS/DiD、交错采用→Staggered DiD、无法随机化→IV/IPW。",
+            "平行趋势假设（DiD/Staggered DiD）：pre-treatment 趋势是否平行。",
+            "外生性 + 排除限制（IV）：工具变量是否与内生解释变量相关、与误差项不相关、不直接影响结果。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "双后端模型拟合",
+          "description": "给定一个准实验方法（声明了 supportsbayes/supportsols）和一个模型实例（PyMC 贝叶斯、sklearn OLS 或 None），统一构造一个可 fit/predict/score/calculateimpact 的后端适配器，让同一个实验类的 algorithm() 不感知后端差异，并在 None 时给出合理默认（总是贝叶斯）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "model（PyMCModel | RegressorMixin | None）：模型实例或 None。",
+            "defaultmodelclass（实验类属性，如 LinearRegression、WeightedSumFitter、PropensityScore）：None 时的默认类。",
+            "supportsbayes / supportsols（实验类属性）：后端支持声明。"
+          ],
+          "outputs": [
+            "fitted self.modelbackend（含 InferenceData 或 sklearn 系数）。",
+            "self.model（公开句柄，同 backend）。",
+            "predict(newx)（贝叶斯返回含 posteriorpredictive.mu 的 dict；OLS 返回 numpy）。"
+          ],
+          "humanChecks": [
+            "后端选择是否匹配不确定性需求：需要后验/不确定性传播 → 贝叶斯；只要点估计 → OLS。",
+            "samplekwargs 是否足够（draws/chains/targetaccept）保证收敛，需检查 rhat/divergences。",
+            "None 默认总是贝叶斯，研究者是否意识到这会触发 MCMC（耗时）。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "可复现pipeline编排",
+          "description": "给定输入数据、实验配置和一组步骤（估计效应、敏感性分析、生成报告），编排一个可复现的因果推断工作流：在任意拟合开始前先验证所有步骤配置，把每步产出累积到共享上下文，最终产出包含效应摘要、诊断结果和图表的自包含 HTML 报告，让分析从\"一次性脚本\"变成\"可复查、可交接的产物链\"。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "data（pd.DataFrame）。",
+            "experimentconfig（dict：method class + kwargs，供 EstimateEffect 构造实验）。",
+            "步骤列表（EstimateEffect、SensitivityAnalysis(checks=[...])、GenerateReport(includeplots, includeeffectsummary, outputfile)）。"
+          ],
+          "outputs": [
+            "PipelineResult（experiment/effectsummary/sensitivityresults/report）。",
+            "HTML 报告（str，自包含，可选写入 outputfile）。",
+            "诊断图（随 sensitivityresults 的 CheckResult.figures）。"
+          ],
+          "humanChecks": [
+            "步骤顺序是否合理（EstimateEffect 必须先于 SensitivityAnalysis 和 GenerateReport）。",
+            "includesensitivity 是否开启（默认 False，诊断不进报告）。",
+            "HTML 报告是否包含足够信息供复查（效应摘要 + 诊断图 + 假设）。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "效应摘要与不确定性量化",
+          "description": "给定已拟合实验的因果 impact 后验（贝叶斯）或点估计 + 残差（OLS），产出决策就绪的效应摘要：点估计（mean/median）、不确定性区间（贝叶斯 HDI / OLS t-CI）、方向概率（P(effect0)）、实际显著性（ROPE）、相对效应（% vs counterfactual）、累积效应，并附多段自然语言 prose 报告，让研究者直接用于决策和沟通。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "causalimpact（DiD/RD：标量后验 chain×draw）或 postimpact（ITS/SC：obsind×chain×draw）或 gradientchange（RKink）。",
+            "postpred（反事实预测，用于相对效应分母）。",
+            "报告参数：direction（increase/decrease/two-sided）、alpha（默认 0.05 → 95% HDI/CI）、cumulative（默认 True，ITS/SC 累积效应）、relative（默认 True，% 变化）、mineffect（ROPE 阈值，仅贝叶斯）、window（\"post\"/tuple/slice，ITS/SC 时间窗）、treatedunit（多单元实验）、period（intervention/post/comparison，三阶段 ITS）、prefix（prose 前缀）。"
+          ],
+          "outputs": [
+            "EffectSummary.table（pd.DataFrame：行 average/cumulative，列 mean/median/hdilower/hdiupper/pgt0/plt0/ptwosided/probofeffect/prope/relativemean/relativehdilower/relativehdiupper）。",
+            "EffectSummary.text（多段 prose：观察 vs 反事实 + 累积 + 可信度 + 假设建议）。",
+            "Staggered DiD 额外：atteventtime 表（含 identified 列）。"
+          ],
+          "humanChecks": [
+            "alpha/hdiprob 是否匹配领域惯例（0.94 是 ArviZ 默认，不是 0.95）。",
+            "direction 是否匹配研究假设（预期增加→increase，预期减少→decrease，无方向→two-sided）。",
+            "mineffect（ROPE 阈值）是否有领域依据，不能任意设。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "稳健性诊断检查",
+          "description": "给定一个已拟合的准实验实验对象，运行可插拔的稳健性/敏感性诊断检查套件（安慰剂检验、留一法、密度检验、凸包检验、先验敏感性、持续性检验等），每项检查产出 pass/fail 判定 + 诊断统计表 + prose + 图表，让研究者快速判断因果结论是否稳健，是否依赖特定观测、特定先验或特定 donor。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "已拟合实验对象（BaseExperiment 子类实例）。",
+            "PipelineContext（提供 experimentconfig、data，供诊断派生实验工厂）。",
+            "各检查自有参数（如 PlaceboInTime 的 nfolds、fold 选择策略、assurance 的 expected-effect prior；LeaveOneOut 的留出单元；McCrary 的 bin 数；PriorSensitivity 的先验列表）。"
+          ],
+          "outputs": [
+            "CheckResult(checkname, passed, table, text, figures, metadata)（每项检查一个）。",
+            "SensitivitySummary(results, allpassed, text)（聚合）。",
+            "诊断图（matplotlib figures，随 CheckResult.figures）。"
+          ],
+          "humanChecks": [
+            "哪些检查适用于当前设计（RD→McCrary/Bandwidth，SC→LeaveOneOut/ConvexHull/PlaceboInSpace，ITS→PlaceboInTime，贝叶斯→PriorSensitivity）。",
+            "PlaceboInTime 的 fold 数和选择策略是否足够（太少→不可靠，太多→计算贵）。",
+            "assurance 的 expected-effect prior 是否有领域依据。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "用统一接口完成常见准实验因果估计、诊断和报告。"
+        }
+      ],
+      "gettingStarted": [
+        "先写清识别策略和估计对象",
+        "选择官方示例数据跑通一种方法",
+        "检查诊断和效应摘要"
+      ],
+      "requirements": [
+        "Python",
+        "PyMC 或 scikit-learn 后端",
+        "准实验研究设计"
+      ],
+      "limitations": [
+        "本轮未完成本机运行",
+        "方法适用条件差异很大",
+        "诊断通过也不能代替识别判断"
+      ],
+      "verifiedScope": [
+        "读取 causalpy/experiments/diffindiff.py（DifferenceInDifferences：algorithm、反事实构造、输入校验、effectsummary）",
+        "读取 causalpy/experiments/syntheticcontrol.py（SyntheticControl：treatmenttime、control/treated units、mindonorcorrelation）",
+        "读取 causalpy/experiments/regressiondiscontinuity.py（RegressionDiscontinuity：treatmentthreshold、epsilon、bandwidth、donuthole）",
+        "读取 causalpy/experiments/interruptedtimeseries.py（InterruptedTimeSeries：双/三阶段、treatmentendtime）",
+        "读取 causalpy/experiments/instrumentalvariable.py（InstrumentalVariable：两阶段、vspriortype、binarytreatment）",
+        "读取 causalpy/experiments/inversepropensityweighting.py（InversePropensityWeighting：propensity 模型、weightingscheme）",
+        "读取 causalpy/experiments/staggereddid.py（StaggeredDifferenceInDifferences：BJS 2024 imputation 估计量）",
+        "读取 ARCHITECTURE.md 实验清单表（12 个实验类 + 后端支持矩阵）"
+      ],
+      "unverifiedScope": [
+        "未运行本机 PyMC smoke",
+        "未深读 PrePostNEGD、RegressionKink、PiecewiseITS、PanelRegression、SyntheticDifferenceInDifferences 的算法细节",
+        "未核对每个实验的 OLS fallback 分支",
+        "未深读 pymcmodels.py 各模型类的 buildmodel 实现（LinearRegression/WeightedSumFitter/InstrumentalVariableRegression/PropensityScore/BayesianBasisExpansionTimeSeries/StateSpaceTimeSeries）",
+        "未深读 sklmodels.py createcausalpycompatibleclass 的 patch 细节",
+        "未运行本机双后端对比 smoke",
+        "未深读 Pipeline.run 的验证前置逻辑（\"all steps validated before any fitting\"）",
+        "未深读 GenerateReport 的 HTML 渲染细节"
+      ],
+      "researchStages": [
+        "research-design",
+        "data-analysis",
+        "validation"
+      ],
+      "tags": [
+        "因果推断",
+        "准实验",
+        "pymc"
+      ],
+      "keywords": [
+        "causalpy",
+        "准实验因果推断",
+        "did 合成控制"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-scientific-agent-skills",
+      "slug": "scientific-agent-skills",
+      "name": "Scientific Agent Skills",
+      "oneLiner": "用一组科研 Skill 覆盖论文查找、写作、评审、统计和实验设计。",
+      "summary": "面向多学科科研 Agent 的大型 Skill 集合，首批已拆解六类高频科研能力和安全扫描机制。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/scientific-agent-skills",
+      "sourceType": "skill",
+      "source": {
+        "kind": "skill",
+        "url": "https://github.com/K-Dense-AI/scientific-agent-skills",
+        "repository": "K-Dense-AI/scientific-agent-skills",
+        "version": "2b4cce7d8763232864fa3dff701e311636bcc62f",
+        "checkedAt": "2026-06-15",
+        "checksum": "sha256:08baacc476562cca265ea3824709802bf8c291c634e19259eb8788890d5c256f"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "MIT",
+        "url": "https://github.com/K-Dense-AI/scientific-agent-skills/blob/main/LICENSE"
+      },
+      "maturity": "experimental",
+      "verification": "partially-verified",
+      "editorialVerdict": "worth-watching",
+      "recommendedFor": [
+        "希望组合科研 Skill 的 Agent 开发者",
+        "需要论文查找、统计和实验设计入口的研究者"
+      ],
+      "notRecommendedFor": [
+        "准备一次性安装全部 Skill 的用户",
+        "缺少安全扫描和人工验收的环境"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "同行评审结构化审查",
+          "description": "把论文、grant、preprint 或科学演示材料，按初评、逐节审查、方法统计、可复现、图表、伦理和写作质量生成结构化评审意见。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "待审 manuscript、grant、preprint 或 presentation。",
+            "目标 venue 或评审标准。",
+            "可选报告指南：CONSORT、STROBE、PRISMA、ARRIVE、MIAME、MINSEQE 等。"
+          ],
+          "outputs": [
+            "summary statement。",
+            "major comments，按严重度和可修复性排序。",
+            "minor comments。"
+          ],
+          "humanChecks": [
+            "目标 venue 的审稿标准是否已知。",
+            "哪些问题足以构成 reject 或 major revision。",
+            "评论是否要求了超出论文范围的新实验。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "多数据库论文查找",
+          "description": "把用户的论文查找、DOI 查询、开放获取全文、作者论文、引用图谱或预印本需求，路由到合适的学术数据库，并返回可追溯的原始 API 结果和查询记录。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "用户自然语言问题，例如找某主题论文、查 DOI、找开放获取 PDF、找作者论文、查引用关系。",
+            "可选论文标识符：DOI、PMID、PMCID、arXiv ID、OpenAlex ID、Semantic Scholar ID、ORCID、ISSN。",
+            "可选环境变量：NCBIAPIKEY、COREAPIKEY、S2APIKEY、OPENALEXAPIKEY。"
+          ],
+          "outputs": [
+            "Databases Queried 清单，包含数据库名、endpoint 和查询意图。",
+            "每个数据库的原始 JSON 或解析后的 XML 结果。",
+            "失败库、空结果和替代尝试说明。"
+          ],
+          "humanChecks": [
+            "用户要的是“查到候选论文”，还是“证明某个主张有依据”。",
+            "多库结果是否需要去重和排序。",
+            "多库去重是否允许用标题弱匹配，是否需要人工复核。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "实验设计与随机化布局",
+          "description": "把研究问题、处理条件、实验单位、干扰因素和运行约束，转换成可审计的设计结构、随机化 schedule、运行布局、质量门和后续 power 与 analysis 交接。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "研究问题、response、处理条件和控制条件。",
+            "实验单位、随机化单位、重复单位和分析单位。",
+            "样本或实验单元数量。"
+          ],
+          "outputs": [
+            "研究设计对象。",
+            "allocation schedule 或 DOE layout。",
+            "arm balance、block balance、run order 和 layout status。"
+          ],
+          "humanChecks": [
+            "实验单位和处理施加层级是否真实一致。",
+            "技术重复是否被误当作独立重复。",
+            "哪些 nuisance factor 必须 block，哪些只能记录为 covariate。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "科研写作结构化表达",
+          "description": "把科研材料、文献线索、图表计划和目标期刊要求，转成符合 IMRAD、引用规范、报告指南和段落化表达要求的科学写作产物。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "研究问题、目标期刊、文章类型和目标读者。",
+            "已有数据结果、图表、方法说明、研究限制和参考文献。",
+            "research-lookup 或其他文献检索能力产出的文献与要点。"
+          ],
+          "outputs": [
+            "科学论文段落、摘要、Introduction、Methods、Results、Discussion、投稿稿。",
+            "研究报告或白皮书 LaTeX 结构。",
+            "图形计划、graphical abstract、schematic、figure caption。"
+          ],
+          "humanChecks": [
+            "哪些主张必须有真实来源支持。",
+            "目标期刊是否允许非结构化摘要。",
+            "图像是否真的需要生成，还是只需要图表计划。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "统计分析与结果报告",
+          "description": "把已有研究数据、变量类型、研究问题和报告要求，转换成检验选择、假设诊断、统计结果、效应量、解释边界和 APA 风格报告。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "研究问题和假设。",
+            "数据表，至少包含 outcome、predictor 或 group 列。",
+            "变量类型：continuous、binary、categorical、ordinal、count、time-to-event。"
+          ],
+          "outputs": [
+            "数据状态对象。",
+            "检验选择路径和 selected test。",
+            "假设诊断结果。"
+          ],
+          "humanChecks": [
+            "研究问题和变量类型是否被正确理解。",
+            "分组是否独立，是否存在配对、重复测量或聚类。",
+            "缺失机制和排除规则是否需要人工确认。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "统计功效与样本量计算",
+          "description": "把研究设计、效应量、显著性水平、目标功效和样本量约束，转换成样本量、达到功效、最小可检测效应、功效曲线或模拟功效估计。",
+          "evidenceLevel": "runtime-verified",
+          "inputs": [
+            "研究设计和计划分析，例如 two independent means、paired mean、ANOVA、two proportions、correlation、chi-square、linear regression。",
+            "三个已知量：样本量、效应量、alpha、power 中的任意三个。",
+            "test 特定参数，例如 kgroups、prop1、prop2、dof、dfnum、ktotal、ratio、alternative。"
+          ],
+          "outputs": [
+            "required sample size，例如 npergroup 或 total n。",
+            "achieved power。",
+            "minimum detectable effect。"
+          ],
+          "humanChecks": [
+            "effect size 是否来自 SESOI、收缩后的先验估计或领域阈值。",
+            "计划分析是否和 power 方法一致。",
+            "是否需要 one-sided test，以及是否有合理说明。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "skill市场准入与安全扫描",
+          "description": "解释 scientific-agent-skills 作为大型 skill 集合，怎样通过目录结构、frontmatter、版本、安装路径、贡献规范和安全扫描，把单个 skill 变成可分发、可审查、可安装的 agent 能力单元。"
+        }
+      ],
+      "gettingStarted": [
+        "先运行安全扫描",
+        "只选择一个明确任务的 Skill",
+        "用最小输入检查输出合同"
+      ],
+      "requirements": [
+        "支持 Skill 的 Agent 环境",
+        "Python",
+        "按具体 Skill 准备数据或 API"
+      ],
+      "limitations": [
+        "当前只拆解大型集合中的六类能力",
+        "不同 Skill 的依赖和质量差异明显",
+        "外部模型和数据库需要独立核验"
+      ],
+      "verifiedScope": [
+        "只读上游仓库 2b4cce7",
+        "peer-review/SKILL.md",
+        "commonissues.md",
+        "reportingstandards.md",
+        "generateschematic.py",
+        "SECURITY.md 中 peer-review 的 critical 摘要线索",
+        "无外部 API 的评审判断合同 dry run",
+        "自造 manuscript 样本的 major、minor、question 和 final recommendation"
+      ],
+      "unverifiedScope": [
+        "未审阅真实论文或 grant 样本",
+        "未运行 presentation PDF 转图审阅流程",
+        "未调用示意图生成脚本",
+        "未验证评审意见和原文行号映射",
+        "未验证不同 venue 的 reviewer expectations",
+        "未验证原始数据、代码和伦理文件审查",
+        "未验证 API key 模式",
+        "未验证 rate limit 和 429 重试"
+      ],
+      "researchStages": [
+        "literature",
+        "research-design",
+        "data-analysis",
+        "validation",
+        "writing"
+      ],
+      "tags": [
+        "科研 skill",
+        "统计分析",
+        "实验设计"
+      ],
+      "keywords": [
+        "scientific agent skills",
+        "科研 agent",
+        "科研 skill"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-arxiv-mcp-server",
+      "slug": "arxiv-mcp-server",
+      "name": "arXiv MCP Server",
+      "oneLiner": "让 AI 助手通过 MCP 搜索、下载和读取 arXiv 论文。",
+      "summary": "把 arXiv 搜索、全文缓存、本地语义检索和引用图谱暴露为 MCP 工具，适合程序化文献获取。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/arxiv-mcp-server",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/blazickjp/arxiv-mcp-server",
+        "repository": "blazickjp/arxiv-mcp-server",
+        "version": "d58901760d7ede4adb162eaba1725209a933f100",
+        "checkedAt": "2026-07-10",
+        "checksum": "sha256:768e75773a6606521f893253ef173d7493aa1628c9b5ab24a5b87a819dabf26c"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "Apache-2.0",
+        "url": "https://github.com/blazickjp/arxiv-mcp-server/blob/main/LICENSE"
+      },
+      "maturity": "stable",
+      "verification": "catalogued",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "需要在 AI 助手中检索 arXiv 的研究者",
+        "希望把论文缓存到本地的开发者"
+      ],
+      "notRecommendedFor": [
+        "主要依赖中文数据库的研究任务",
+        "无法管理外部论文内容安全的环境"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "arxiv搜索",
+          "description": "用自然语言或 arXiv 高级查询语法搜索 arXiv 论文，支持类别过滤、日期范围过滤和排序，返回结构化论文候选列表（含 id/title/authors/abstract/categories/published/url/resourceuri）。该能力还包含按 arXiv ID 单独获取论文元数据（getabstract），用于在下载全文前评估相关性。这是 arxiv-mcp-server 工作流的第一步（searchpapers → downloadpaper → readpaper）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "query（str，必填）：arXiv 查询语法。支持引号短语（\"machine learning\"）、字段限定（ti:/au:/abs:/cat:）、布尔（AND/OR/ANDNOT）。",
+            "maxresults（int，可选，默认 10，上限 50）：最大返回数，受 settings.MAXRESULTS（默认 50）封顶。",
+            "datefrom（str，可选，YYYY-MM-DD）：起始日期。"
+          ],
+          "outputs": [
+            "搜索结果：{totalresults, papers: [papercandidate...]}。",
+            "getabstract 结果：单篇元数据 dict（含 pdfurl）。",
+            "注意：本来源是单源候选（仅 arXiv），无跨源去重。候选对象 supportstatus: unchecked（候选不等于证据）。"
+          ],
+          "humanChecks": [
+            "arXiv 3s 限速在多并发 MCP 调用下是否足够（README 称 arXiv 要求 = 3s）。",
+            "429/503 后 60s 等待建议的准确性（README 与代码一致，但未验证实际封禁时长）。",
+            "raw HTTP 路径与 arxiv 包路径在无日期过滤时结果是否一致（两条路径返回字段相同，但排序/分页可能有细微差异）。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "本地论文语义检索",
+          "description": "对已下载到本地的论文集合做语义相似度检索，支持自由文本查询或以一篇已知论文找相似论文，返回按余弦相似度排序的候选列表。该能力是实验性 [pro] 功能，仅在 downloadpaper 已建立本地缓存后生效（空集合返回空结果）。底层用 sentence-transformers all-MiniLM-L6-v2 嵌入摘要，SQLite 存储向量，归一化向量矩阵点积计算余弦相似度。还包含重建索引（reindex）能力。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "query（str，可选）：自由文本语义查询（如 \"attention mechanisms for long sequences\"）。",
+            "paperid（str，可选）：找与此论文相似的其他论文。",
+            "maxresults（int，可选，默认 10）：最大返回数，受 settings.MAXRESULTS 封顶。"
+          ],
+          "outputs": [
+            "semanticsearch 返回：{mode(semanticquery/similartopaper), query, totalresults, papers: [{id, title, abstract, authors, categories, published, score, resourceuri}]}。",
+            "reindex 返回：{status, indexed, failed[], totallocalpapers}。",
+            "注意：这是本地单源检索（仅已下载论文），score 是相似度排序信号，不等于相关性判断。supportstatus: unchecked。"
+          ],
+          "humanChecks": [
+            "all-MiniLM-L6-v2 的实际嵌入维度（常见为 384，未验证）。",
+            "语义检索质量（基于摘要嵌入，不含全文，可能遗漏正文相关论文）。",
+            "rebuildindex 对大量论文（100 篇）的耗时与模型加载开销。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "论文下载与全文获取",
+          "description": "按 arXiv paperid 下载论文，把论文内容转为 markdown 全文，本地缓存为 .md 文件，并支持分页读取大论文。这是 arxiv-mcp-server 工作流的中间环节（searchpapers → downloadpaper → readpaper）。该能力还包含列出本地已下载论文（listpapers）和读取已下载论文全文（readpaper），三者共同构成论文获取与缓存生命周期。HTML 优先、PDF 回退，PDF 走 pymupdf4llm 转 markdown。所有返回内容带 [UNTRUSTED EXTERNAL CONTENT] 安全警告前缀。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "paperid（str，必填）：arXiv ID（如 2103.12345）。",
+            "start（int，可选，=0）：分页起始字符偏移。",
+            "maxchars（int，可选，=1）：返回最大字符数。"
+          ],
+          "outputs": [
+            "downloadpaper 返回：{status, source(cache/html/pdf), paperid, content, contentlength, start, returnedchars, nextstart, istruncated}。",
+            "readpaper 返回：同结构（source 缺省）。",
+            "listpapers 返回：{totalpapers, papers: [id...]}。"
+          ],
+          "humanChecks": [
+            "HTML 端点解析的文本质量（ArticleTextExtractor 是简化版，可能丢失表格/公式格式）。",
+            "PDF 回退路径的实际转换质量（pymupdf4llm，未装 [pdf] extra 未验证）。",
+            "缓存命中时后台索引刷新的实际行为（best-effort + RuntimeError 捕获）。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "让 AI 助手通过 MCP 搜索、下载和读取 arXiv 论文。"
+        }
+      ],
+      "gettingStarted": [
+        "先配置独立论文存储目录",
+        "只启用搜索、下载和读取核心工具",
+        "核对 arXiv 限速和内容安全提示"
+      ],
+      "requirements": [
+        "Python 3.11+",
+        "MCP 客户端",
+        "访问 arXiv 的网络"
+      ],
+      "limitations": [
+        "本轮未调用真实 arXiv API",
+        "语义检索需要额外依赖",
+        "论文内容需要按不可信输入处理"
+      ],
+      "verifiedScope": [
+        "只读上游快照 本地只读快照，commit d58901760d7ede4adb162eaba1725209a933f100",
+        "src/arxivmcpserver/tools/search.py（handlesearch、rawarxivsearch、parsearxivatomresponse、ratelimitedget、validatecategories、optimizequery、searchtool schema）",
+        "src/arxivmcpserver/tools/getabstract.py（handlegetabstract、abstracttool schema）",
+        "src/arxivmcpserver/config.py（Settings、getarxivclient）",
+        "README.md（Paper Search 段、Available Tools）",
+        "src/arxivmcpserver/tools/semanticsearch.py（handlesemanticsearch、semanticsearchtool/reindextool schema、connect、getmodel、embedtext、upsertindexrecord、loadvectors、rankbysimilarity、getindexedpapervector、indexpaperbyid、indexpaperfromresult、rebuildindex、IndexedPaper dataclass）",
+        "src/arxivmcpserver/tools/download.py（runindexbyid/runindexfromresult 后台索引触发，getindexsemaphore 串行化）",
+        "src/arxivmcpserver/tools/listpapers.py（isvalidarxivid 用于 rebuildindex 筛选）"
+      ],
+      "unverifiedScope": [
+        "未调用真实 arXiv API",
+        "未验证 rawarxivsearch 的日期范围 URL 编码在实际查询中的正确性",
+        "未验证 429/503 限速的实际触发与 60s 等待建议的准确性",
+        "未验证 arxiv Python 包路径与 raw HTTP 路径在无日期过滤时的结果差异",
+        "未安装 [pro] extra（sentence-transformers/numpy）",
+        "未运行语义检索或索引",
+        "未验证嵌入模型 all-MiniLM-L6-v2 的实际维度与检索质量",
+        "未验证 SQLite 向量存储的查询性能"
+      ],
+      "researchStages": [
+        "literature"
+      ],
+      "tags": [
+        "arxiv",
+        "mcp",
+        "文献检索"
+      ],
+      "keywords": [
+        "arxiv mcp server",
+        "ai 文献检索",
+        "论文下载"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-papermill",
+      "slug": "papermill",
+      "name": "Papermill",
+      "oneLiner": "把 Jupyter Notebook 变成可参数化、可重复执行的计算单元。",
+      "summary": "通过参数注入、执行引擎和多存储后端，把交互式 Notebook 接入可复现的数据与实验流水线。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/papermill",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/nteract/papermill",
+        "repository": "nteract/papermill",
+        "version": "e4e4ddd362037309c53ab5230541759707779687",
+        "checkedAt": "2026-07-10",
+        "checksum": "sha256:bd760c6998fd538edc8fe61890e64234e9d40c5e691e7dc29dedc9ec38bedba4"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "BSD-3-Clause",
+        "url": "https://github.com/nteract/papermill/blob/main/LICENSE"
+      },
+      "maturity": "production",
+      "verification": "catalogued",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "需要批量重复运行 Notebook 的研究者",
+        "构建参数扫描和报告流水线的团队"
+      ],
+      "notRecommendedFor": [
+        "Notebook 本身不可复现的项目",
+        "缺少内核和数据依赖管理的环境"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "notebook参数化执行",
+          "description": "读取一个输入 notebook，应用参数（参数注入），用指定 Jupyter kernel 逐 cell 执行，在执行过程中实时落盘带运行元数据的输出 notebook，并在出错时保留 traceback 和错误标记后抛出结构化异常。这是 papermill 的核心能力，把 notebook 变成可编程、可追踪、可批量运行的计算单元。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "inputpath：notebook 路径（本地/云/URL/NotebookNode/- stdin）。支持路径参数化（{param} 插值）。",
+            "outputpath：输出路径（None 则不落盘；- 则写 stdout）。",
+            "parameters（dict，可选）：传入参数，交由 papermill-能力-参数注入与cell标记 注入。"
+          ],
+          "outputs": [
+            "执行后 notebook（含 cell outputs、executioncount、papermill 运行元数据）。",
+            "stdout/stderr 文件（若指定）。",
+            "错误标记 cell（失败时）。"
+          ],
+          "humanChecks": [
+            "autosave 指数退避的真实触发条件需运行验证（长 cell + 慢盘）。",
+            "cell 失败后 break 的行为意味着后续 cell 不执行，需人工确认部分结果是否可信。",
+            "DeadKernel 退出码 138 的下游处理（调度系统）需人工确认。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "参数注入与cell标记",
+          "description": "把一组外部传入的参数（dict/YAML/base64）注入到一个 Jupyter Notebook 中，覆盖该 notebook 用 parameters cell tag 声明的默认值，生成一个新的带 injected-parameters cell 的 notebook，使其在执行时使用传入值而非默认值。这是 papermill 把手工 notebook 变成可参数化计算单元的核心机制。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "notebook（NotebookNode）：必须先用 nbformat 读取并 upgrade 到 v4，cell 需有 tags 属性。期望含一个 tag 为 parameters 的 code cell，声明默认参数（如 alpha = 0.6 学习率）。",
+            "parameters（dict 或 str）：调用方传入的参数字典。若为 str，视为 YAML 文件路径（readyamlfile）。",
+            "reportmode（bool）：注入 cell 是否标记 sourcehidden。"
+          ],
+          "outputs": [
+            "injected-parameters cell：含目标语言参数赋值代码的 code cell（产物）。",
+            "修改后的 NotebookNode（cells 插入/替换、metadata.papermill.parameters 写入）。",
+            "后续交由 papermill-能力-notebook参数化执行 执行。"
+          ],
+          "humanChecks": [
+            "非 Python 语言的 translator 输出正确性需人工或测试复核（本轮只静态阅读）。",
+            "无 parameters cell 时注入到顶部可能改变 notebook 语义（变量定义顺序），需人工确认。",
+            "pm 内置参数注入路径后，跨时区机器的 datetime 可能不一致，需人工确认时间口径。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "参数自省",
+          "description": "在不执行 notebook 的情况下，静态解析它的 parameters cell，推断出该 notebook 接受哪些参数、每个参数的名称、推断类型、默认值和帮助文本，返回结构化 Parameter 列表。用于 CLI 帮助（--help-notebook）和程序化参数发现，让调用方在执行前知道 notebook 的参数契约。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "notebookpath：notebook 路径（支持路径参数化，可传 parameters 解析路径占位符）。",
+            "parameters（可选，仅用于路径插值）：opennotebook 调 addbuiltinparameters + parameterizepath 解析路径。",
+            "notebook 内的 parameters cell 源码（需有 tag parameters）。"
+          ],
+          "outputs": [
+            "inspectnotebook 返回 {name: {name, inferredtypename, default, help}}。",
+            "CLI 打印格式化帮助。"
+          ],
+          "humanChecks": [
+            "PythonTranslator.inspect 对复杂类型注解（list[int]、dict[str, float]）的解析正确性需测试复核。",
+            "多行 dict/list 定义的 flatten 行为（中间行注释丢弃）需人工确认是否符合预期。",
+            "非 Python notebook 的自省完全不可用（返回空），调用方需人工确认是否接受。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "多引擎io读写",
+          "description": "让 notebook 的读取和写入能透明地跨本地文件系统、S3、Azure DataLake/Blob、GCS、HTTP/HTTPS、HDFS、Github 和 stdin/stdout，使执行核心不需要关心存储后端差异。通过路径 scheme 前缀路由到对应 handler，并支持第三方包经 entry point 注册新 scheme。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "path：notebook 路径字符串，scheme 前缀决定 handler。",
+            "buf（写时）：notebook 序列化后的字符串（nbformat.writes）。",
+            "extensions（可选）：read/write 时检查文件扩展名（默认 ['.ipynb','.json']），不匹配警告。"
+          ],
+          "outputs": [
+            "notebook 文件内容（读时，str/bytes→decode）。",
+            "落盘的 notebook（写时，到各后端）。",
+            "listdir 返回的路径列表（listnotebookfiles 过滤 .ipynb）。"
+          ],
+          "humanChecks": [
+            "各云 handler 的真实读写行为需凭证环境验证（本轮未配置）。",
+            "GCS 重试的实际触发条件（429/None code）需运行确认。",
+            "Github handler 的 path 解析（splits[3]/[4]/[6]）对非常规 URL 的鲁棒性需人工复核。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "引擎与io扩展注册",
+          "description": "让 papermill 的三个核心可扩展面：执行引擎（engine）、I/O handler 和参数 translator：能被第三方包通过 Python entry point 自动发现并注册，或被程序化 register 调用注册，从而在不改 papermill 主代码的前提下增加新的执行后端、存储后端或语言支持。这是 papermill 把\"读 notebook → 执行 → 写 notebook\"三步都做成可扩展插件的关键治理结构。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "第三方包的 entry point 声明：在 pyproject.toml 的 [project.entry-points.\"papermill.engine\"]、[project.entry-points.\"papermill.io\"] 声明 name→class 映射。",
+            "编程式 register 调用：直接调 papermillengines.register(name, EngineClass)、papermillio.register(scheme, HandlerClass)、papermilltranslators.register(language, TranslatorClass)。",
+            "engine 需继承 papermill.engines.Engine 并实现 executemanagednotebook。"
+          ],
+          "outputs": [
+            "注册到单例的新 engine/handler/translator，可被 --engine/路径前缀/kernel 名调用。",
+            "扩展后的可用执行后端/存储后端/语言集合。"
+          ],
+          "humanChecks": [
+            "entry point 加载失败（目标包损坏）时 papermill 是否整体崩溃，需运行确认。",
+            "多个第三方包注册同名 engine/scheme 时的冲突解决（I/O 是 LIFO 后注册优先，engine 是 dict 覆盖），需人工确认。",
+            "translator 不支持 entry point 是设计缺口还是有意，需结合 changelog 复核。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "把 Jupyter Notebook 变成可参数化、可重复执行的计算单元。"
+        }
+      ],
+      "gettingStarted": [
+        "先整理一个可从头运行的 Notebook",
+        "标记 parameters cell",
+        "用本地输入输出跑通一次"
+      ],
+      "requirements": [
+        "Jupyter kernel",
+        "Python",
+        "明确的数据和环境依赖"
+      ],
+      "limitations": [
+        "本轮未实际运行 Notebook",
+        "参数化不能修复隐藏状态",
+        "云存储需要额外凭证和依赖"
+      ],
+      "verifiedScope": [
+        "只读上游快照 本地只读快照，commit e4e4ddd362037309c53ab5230541759707779687",
+        "papermill/execute.py（executenotebook、preparenotebookmetadata、removeerrormarkers、raiseforexecutionerrors）",
+        "papermill/engines.py（Engine、NBClientEngine、NotebookExecutionManager、PapermillEngines）",
+        "papermill/clientwrap.py（PapermillNotebookClient、papermillexecutecells）",
+        "papermill/cli.py（CLI 参数与退出码）",
+        "papermill/iorw.py（loadnotebooknode、writeipynb）",
+        "README.md、docs/usage-execute.rst",
+        "README.md（Parameterizing a Notebook 段）"
+      ],
+      "unverifiedScope": [
+        "未运行真实 notebook 执行",
+        "未验证逐 cell 落盘（requestsaveoncellexecute）的实际写入时机",
+        "未验证 autosave 指数退避的实际触发",
+        "未验证 starttimeout/executiontimeout 的超时行为",
+        "未验证 DeadKernel 退出码 138 的实际触发",
+        "未运行真实 notebook 验证注入 cell 的实际位置与覆盖行为",
+        "未验证非 Python 语言（R/Scala/Julia/Matlab/C/F/Powershell/Bash）translator 的 codify 输出正确性",
+        "未验证 Black 格式化（PythonTranslator.codify 的 black 调用）在无 black 时的降级"
+      ],
+      "researchStages": [
+        "data-analysis",
+        "validation"
+      ],
+      "tags": [
+        "notebook",
+        "参数化执行",
+        "可复现"
+      ],
+      "keywords": [
+        "papermill",
+        "notebook 参数化",
+        "科研计算流水线"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-causal-learn",
+      "slug": "causal-learn",
+      "name": "causal-learn",
+      "oneLiner": "从观测数据中学习因果结构，并比较多类因果发现算法。",
+      "summary": "PyWhy 生态的因果发现 Python 库，覆盖基于约束、评分和函数因果模型的多种方法及图操作。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/causal-learn",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/py-why/causal-learn",
+        "repository": "py-why/causal-learn",
+        "version": "e30895b7ad41c429be73975a6a0b6bdea8146a7e",
+        "checkedAt": "2026-07-10",
+        "checksum": "sha256:3c1ddb8565d2acc9fe9784b1866aafbece124dfd98e3b83d078179096406e5bb"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "MIT",
+        "url": "https://github.com/py-why/causal-learn/blob/main/LICENSE"
+      },
+      "maturity": "stable",
+      "verification": "catalogued",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "需要探索因果图假设的研究者",
+        "希望比较多种因果发现算法的开发者"
+      ],
+      "notRecommendedFor": [
+        "把算法输出直接当成已识别因果结论的任务",
+        "缺少领域假设和稳健性检查的研究"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "因果图操作与评分",
+          "description": "为因果发现算法提供底层支撑：(1) 因果图的统一表示与操作（DAG/CPDAG/PAG/PDAG 的端点矩阵表示、转换、查询）；(2) 结构学习的评分函数库（BIC/BDeu/CV/marginal 六类局部评分）；(3) 发现结果与真值的评估指标（SHD、邻接/箭头混淆矩阵）。这些是算法能运行和被评价的基础设施。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "图类：节点列表 nodes（GraphNode 对象）、边定义（endpoint 组合）。",
+            "DAG2CPDAG：G（Dag 对象）。",
+            "PDAG2DAG：PDAG 邻接矩阵。"
+          ],
+          "outputs": [
+            "图操作：GeneralGraph 对象（可被 drawpydotgraph 可视化、tonxgraph 转 networkx）。",
+            "转换：新的 GeneralGraph（CPDAG/DAG/PAG）。",
+            "评分：float（局部评分值，越大约好或越差取决于评分定义）。"
+          ],
+          "humanChecks": [
+            "端点矩阵的读图约定是否正确（迁移/比较时）。",
+            "评分函数选择是否匹配数据（线性→BIC、离散→BDeu、非线性→CV/marginal）。",
+            "SHD 评估时真值图与估计图是否在同一端点约定下。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "基于函数因果模型的因果发现",
+          "description": "利用特定函数因果模型（Functional Causal Model, FCM）的可识别性约束：主要是非高斯性（LiNGAM）、非线性加性噪声（ANM）或后非线性（PNL）：把数据拟合到结构方程模型后，通过残差独立性检验判定因果方向，从而在有向无环图上确定（而不仅是等价类）因果结构。覆盖线性非高斯（LiNGAM 家族）、非线性加性噪声（ANM）、后非线性（PNL）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "X：numpy ndarray，shape=(nsamples, nfeatures)，观测数据。",
+            "LiNGAM 共有（BaseLiNGAM）：randomstate（种子）、priorknowledge（先验因果顺序矩阵，0=禁路径/1=必路径/-1=未知）、applypriorknowledgesoftly、measure（'pwling' 或 'kernel'，DirectLiNGAM 用）。",
+            "ICALiNGAM：maxiter（FastICA 最大迭代，默认 1000）。"
+          ],
+          "outputs": [
+            "LiNGAM：adjacencymatrix（B 矩阵，B[i,j]=j→i 的系数）、causalorder（因果顺序列表）。",
+            "VARLiNGAM：结构 VAR 系数 + 同期因果邻接矩阵 + BootstrapResult。",
+            "ANM：方向判定（X→Y 或 Y→X）。"
+          ],
+          "humanChecks": [
+            "数据是否满足非高斯（LiNGAM）/非线性加性（ANM）/后非线性（PNL）假设：核心可识别性人工门。",
+            "causalorder 是否与领域时间/逻辑顺序一致。",
+            "VARLiNGAM 的滞后阶是否合理（用 BIC 选后仍需人工确认）。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "基于分数的因果发现",
+          "description": "不从条件独立性出发，而是为每个候选 DAG 定义一个评分函数（BIC/BDeu/CV 似然/marginal 似然），在 DAG 等价类空间或排列空间中搜索评分最优的因果结构，输出 CPDAG。覆盖贪心等价搜索（GES）、精确搜索（ExactSearch，DP/A）、排列类搜索（BOSS/GRaSP）和连续优化类方法（CALM）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "X：numpy ndarray，shape=(nsamples, nfeatures)，观测数据。GES 支持用 cov（协方差矩阵）+ n（样本量）替代 X（仅 BIC 类评分）。",
+            "scorefunc：评分函数名，localscoreBIC / localscoreBDeu / localscoreCVgeneral / localscoremarginalgeneral / localscoreCVmulti / localscoremarginalmulti / localscoreBICfromcov。",
+            "maxP（GES）：允许的最大父节点数。"
+          ],
+          "outputs": [
+            "GES：Record 字典。",
+            "ExactSearch：GeneralGraph（最优 DAG）。",
+            "BOSS/GRaSP：GeneralGraph（CPDAG）。"
+          ],
+          "humanChecks": [
+            "scorefunc 是否匹配数据类型（线性/非线性、连续/离散）：核心人工门。",
+            "lambdavalue / maxP 是否合理（控制稀疏与复杂度）。",
+            "GES 贪心结果是否需要用 ExactSearch 复核全局最优。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "基于约束的因果发现",
+          "description": "从观测数据出发，用条件独立性检验（conditional independence test）反复检验变量间是否独立，先学出无向骨架（skeleton），再按 v-结构（collider）和 Meek 规则定向，得到表示因果结构的 CPDAG（PC）或允许潜在混杂的 PAG（FCI），或处理非平稳/异质数据的增广骨架（CDNOD）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "data：numpy ndarray，shape=(nsamples, nfeatures)，观测数据矩阵。",
+            "alpha：显著性水平，默认 0.05。",
+            "indeptest：条件独立性检验方法名，fisherz/chisq/gsq/kci 等（见 causal-learn-能力-条件独立性检验）。"
+          ],
+          "outputs": [
+            "PC/CDNOD：CausalGraph 对象。",
+            "FCI：GeneralGraph 对象（PAG），含 endpoint 矩阵、ambiguoustriples、underlinetriples。"
+          ],
+          "humanChecks": [
+            "CI 检验方法是否匹配数据类型（线性/非线性、连续/离散）：核心人工门。",
+            "causal sufficiency 是否成立（决定用 PC 还是 FCI）。",
+            "alpha 是否合理（过小漏真因果边，过大引入假边）。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "时间序列因果发现",
+          "description": "给定多维时间序列，判断一个变量的过去值是否对另一个变量的当前值有因果（预测性或结构性）影响。Granger 用\"加入 X 的滞后是否显著降低 Y 的预测残差\"做假设检验；VAR-LiNGAM 用非高斯性把 VAR 残差分解成同期结构因果，区分 X→Y（同期）和 X 的过去→Y（滞后）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "Granger：",
+            "VARLiNGAM："
+          ],
+          "outputs": [
+            "Granger：pvaluematrix（逐滞后阶的 p 值矩阵）、adjmatrix（逐滞后阶的二值邻接矩阵）。",
+            "VAR-LiNGAM：adjacencymatrices（同期因果 B + 滞后 AR 系数）、causalorder、TimeseriesBootstrapResult（bootstrap 稳定性）。"
+          ],
+          "humanChecks": [
+            "时间序列是否平稳（决定 Granger 可用性）：核心人工门。",
+            "VAR-LiNGAM 残差是否满足非高斯（决定同期因果可识别性）。",
+            "滞后阶 maxlag/lags 是否合理（BIC 选择后仍需人工确认）。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "条件独立性检验",
+          "description": "为约束类因果发现（PC/FCI/CDNOD）和函数因果模型方向判定（ANM/PNL）提供统一的条件独立性检验入口：给定变量集 X、Y 和条件集 Z，返回 X⫫Y|Z 是否成立的统计判断（pvalue 和布尔结果），并支持多种检验方法（参数/非参数/核/离散），带结果缓存避免重复计算。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "data：numpy ndarray，shape=(nsamples, nfeatures)，完整观测数据矩阵（初始化 CIT 时传入一次）。",
+            "method：检验方法名，'fisherz'/'mvfisherz'/'mcfisherz'/'kci'/'fastkci'/'rcit'/'chisq'/'gsq' 之一。",
+            "Xs、Ys：要检验独立性的变量索引列表。"
+          ],
+          "outputs": [
+            "pvalue（float）：条件独立性检验的 p 值。",
+            "CIT 实例可被 pc/fci/cdnod 直接作为 indeptest 参数传入（传方法名字符串或 CIT 对象）。",
+            "缓存的中间对象（相关矩阵、核矩阵）。"
+          ],
+          "humanChecks": [
+            "method 是否匹配数据类型（线性连续→fisherz、非线性→kci/rcit、离散→chisq/gsq、含缺失→mvfisherz）：核心人工门。",
+            "alpha 阈值是否合理。",
+            "大数据用 kci 是否需要降采样或改用 rcit/fastkci。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "从观测数据中学习因果结构，并比较多类因果发现算法。"
+        }
+      ],
+      "gettingStarted": [
+        "先明确数据类型和因果假设",
+        "从一种算法和小样本开始",
+        "比较图结构与领域知识"
+      ],
+      "requirements": [
+        "Python",
+        "适合的观测数据",
+        "因果发现基础"
+      ],
+      "limitations": [
+        "本轮未安装运行",
+        "算法依赖不同统计假设",
+        "输出需要领域和稳健性复核"
+      ],
+      "verifiedScope": [
+        "静态读取 causallearn/graph/（GeneralGraph、Dag、Edge、Endpoint、GraphClass、GraphUtils、SHD、AdjacencyConfusion、ArrowConfusion）",
+        "静态读取 causallearn/utils/DAG2CPDAG.py、DAG2PAG.py、PDAG2DAG.py、TXT2GeneralGraph.py",
+        "静态读取 causallearn/score/LocalScoreFunction.py（6 类评分）、LocalScoreFunctionClass.py",
+        "静态读取 causallearn/utils/GraphUtils.py",
+        "静态读取 causallearn/search/FCMBased/lingam/（directlingam、icalingam、varlingam、varmalingam、rcd、CAMUV、multigroupdirectlingam、longitudinallingam、causaleffect、bottomupparcelingam）",
+        "静态读取 causallearn/search/FCMBased/ANM/ANM.py",
+        "静态读取 causallearn/search/FCMBased/PNL/PNL.py",
+        "静态读取 causallearn/search/FCMBased/lingam/hsic.py、hsic2.py（HSIC 独立性检验）"
+      ],
+      "unverifiedScope": [
+        "未运行图转换（dag2cpdag/pdag2dag），未验证转换输出",
+        "未运行 SHD 评估，未验证指标计算",
+        "未验证 LocalScoreFunction 各类的实际评分值",
+        "未运行任何 LiNGAM/ANM/PNL，未验证邻接矩阵和因果顺序输出",
+        "未验证 ICA-LiNGAM 与 Direct-LiNGAM 在同一数据上的差异",
+        "未验证 VAR-LiNGAM 的时间序列滞后因果输出",
+        "未运行 ges/exactsearch/boss/grasp，未验证实际评分搜索输出",
+        "未验证 BIC 与 BDeu 在离散数据上的评分差异"
+      ],
+      "researchStages": [
+        "research-design",
+        "data-analysis",
+        "validation"
+      ],
+      "tags": [
+        "因果发现",
+        "因果图",
+        "python"
+      ],
+      "keywords": [
+        "causal learn",
+        "因果发现",
+        "pc fci ges"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-pgmpy",
+      "slug": "pgmpy",
+      "name": "pgmpy",
+      "oneLiner": "构建概率图模型，并完成结构学习、推理、因果干预和数据模拟。",
+      "summary": "覆盖贝叶斯网络、结构学习、参数学习、概率推理、do 演算和模型验证的 Python 图模型工具栈。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/pgmpy",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/pgmpy/pgmpy",
+        "repository": "pgmpy/pgmpy",
+        "version": "c7fa866a8b50a7eb781124e12411708dd86f2c25",
+        "checkedAt": "2026-07-10",
+        "checksum": "sha256:3f2e29c409d6ccaa54216cd3970ee06b67c3585e07d05e1da16d9b15ae7a91f0"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "MIT",
+        "url": "https://github.com/pgmpy/pgmpy/blob/main/LICENSE"
+      },
+      "maturity": "stable",
+      "verification": "catalogued",
+      "editorialVerdict": "recommended",
+      "recommendedFor": [
+        "需要贝叶斯网络和概率推理的研究者",
+        "研究图结构与因果干预的开发者"
+      ],
+      "notRecommendedFor": [
+        "把结构学习结果直接解释成因果事实的任务",
+        "缺少概率图模型基础的快速分析"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "参数学习",
+          "description": "给定一个已确定图结构的贝叶斯网络（结构可手写或由结构学习得到）和一份观测数据，估计每个节点的条件概率分布（CPD）参数，使模型能用于推理、预测和模拟。支持离散贝叶斯网络的 MLE/Bayesian/EM 估计与线性高斯贝叶斯网络的 MLE 估计，并能处理含隐变量或缺失数据的情况。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "已确定结构的模型对象（DiscreteBayesianNetwork / LinearGaussianBayesianNetwork，含边但 CPD 未填或待更新）。",
+            "观测数据：pandas.DataFrame，列名与节点名一致。",
+            "估计器选择：estimator=\"MLE\"（默认）或 BayesianEstimator。"
+          ],
+          "outputs": [
+            "填充 CPD 的模型对象（bn.getcpds() 返回 TabularCPD/LinearGaussianCPD 列表）。",
+            "可传入 pgmpy-能力-概率推理 做后验推断、pgmpy-能力-数据模拟 生成合成数据、pgmpy-能力-因果推断与do演算 做干预查询。"
+          ],
+          "humanChecks": [
+            "估计器选择（MLE vs Bayesian vs EM）是否匹配样本量与缺失情况。",
+            "Bayesian 先验类型与 pseudocount 是否反映合理领域信念。",
+            "EM 收敛是否检查（对数似然轨迹、maxiter 是否触及）。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "因果推断与do演算",
+          "description": "给定一个因果图（DAG，方向编码因果假设）和已填充的 CPD，计算干预分布 P(Y | do(X))：即\"如果人为设定 X 而非仅观测 X，Y 的分布会怎样\"。这区别于条件概率 P(Y | X)，需要先用后门/前门准则识别调整集，再做 do 操作（移除干预变量的入边）和调整后的概率推断，让研究者能区分观测相关与因果效应。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "因果图（DiscreteBayesianNetwork / LinearGaussianBayesianNetwork / SEMGraph / DAG），边的方向编码因果假设。",
+            "已填充的 CPD（离散）或线性高斯参数。",
+            "variables：查询目标变量（Y）。"
+          ],
+          "outputs": [
+            "干预分布 DiscreteFactor（P(Y | do(X), evidence)）。",
+            "调整集识别结果（Adjustment.identify 返回 (调整图, 是否存在)）。",
+            "mutilated DAG（do 操作后的图）。"
+          ],
+          "humanChecks": [
+            "因果图方向是否由领域知识/结构学习+专家定向确定（不能凭数据相关定向）。",
+            "后门/前门调整集识别是否成功，不可识别时是否报告。",
+            "variant 选择（minimal vs all vs minimalvariance）是否匹配估计目标。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "数据模拟",
+          "description": "给定一个已填充 CPD 的贝叶斯网络，生成符合该网络联合分布的合成数据，并支持在生成时施加干预（do）、证据（evidence）、软证据（virtualevidence）、软干预（virtualintervention）、缺失机制（missingprob）和部分固定样本（partialsamples），让研究者能生成可复现的合成数据用于结构学习/参数学习的方法验证、敏感性分析和因果干预模拟。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "已填充 CPD 的模型对象（DiscreteBayesianNetwork/LinearGaussianBayesianNetwork/FunctionalBayesianNetwork）。",
+            "nsamples：要生成的样本数。",
+            "do：硬干预 {var: state}（生成时强制设定，切断父节点影响）。"
+          ],
+          "outputs": [
+            "pandas.DataFrame（合成数据），可直接用于结构学习/参数学习的方法验证、敏感性分析。",
+            "干预模拟的样本可用于验证 pgmpy-能力-因果推断与do演算 的 do 查询结果。",
+            "含缺失的样本（returnfull=True）可用于测试 EM 参数学习。"
+          ],
+          "humanChecks": [
+            "do 干预模拟的设定是否符合研究问题的因果干预场景。",
+            "missingprob 的 MAR/MNAR 假设是否匹配真实缺失机制。",
+            "采样方法（forward/rejection/likelihoodweighted/Gibbs）是否匹配 evidence 与精度要求。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "概率推理",
+          "description": "给定一个已填充 CPD 的贝叶斯网络，计算后验条件概率 P(query | evidence)、最大后验（MAP）、边际分布或极大边际，让研究者能在给定观测证据下做概率查询。支持精确推理（变量消元、联结树置信传播）与近似推理（采样近似、Gibbs 采样）。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "已填充 CPD 的模型对象（DiscreteBayesianNetwork 或 DiscreteMarkovNetwork，含完整 CPD）。",
+            "query：要查询的变量列表。",
+            "evidence：观测证据 {var: state} 字典。"
+          ],
+          "outputs": [
+            "DiscreteFactor（后验条件分布 P(query | evidence)）。",
+            "MAP 状态字典（后验最大的状态组合）。",
+            "极大边际（maxmarginal）。"
+          ],
+          "humanChecks": [
+            "精确（VE/BP）vs 近似（采样）的选择是否匹配网络规模与精度要求。",
+            "消元顺序是否合理（影响性能）。",
+            "采样的 nsamples/burnin/seed 是否报告，收敛是否检查。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "结构学习",
+          "description": "给定一份观测数据（离散或连续），从数据中学习贝叶斯网络的有向无环图结构（因果发现），输出满足条件独立性或评分最优的 DAG，让研究者不必手写图结构就能用数据驱动地得到因果假设候选，并支持注入专家知识约束边的方向。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "观测数据：pandas.DataFrame，列名为变量名，离散/连续。",
+            "citest（PC 用）：\"chisquare\"、\"gsq\"、\"loglikelihood\"、\"pearsonr\"、\"powerdivergence\" 等（离散）或 fisherz（连续）。",
+            "scoringmethod（评分搜索用）：\"bic-g\"（高斯 BIC）、\"bdeu\"、\"k2\"、\"aic\" 等。"
+          ],
+          "outputs": [
+            "学到的 DAG（DiscreteBayesianNetwork 或 networkx.DiGraph），可传入 pgmpy-能力-参数学习 学 CPD、pgmpy-能力-概率推理 做推断、pgmpy-能力-因果推断与do演算 做因果查询。",
+            "PDAG/CPDAG 等价类（PC returntype=pdag），部分边方向不定。",
+            "结构评分值（可对比模型）。"
+          ],
+          "humanChecks": [
+            "学到的因果方向是否与领域知识一致；等价类内不可识别方向是否需专家定向。",
+            "CI 检验/评分方法是否匹配数据类型与样本量。",
+            "significancelevel/maxindegree 是否按领域调整。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "结构验证与模型检测",
+          "description": "给定一个学到的/假设的因果图结构（或多个候选图）和真实图/数据，评估该结构与真实图或数据的契合程度：结构层面（SHD 结构汉明距离、邻接/定向混淆矩阵）和数据层面（图隐含的条件独立性是否被数据支持、相关性评分、Fisher-C 评分、BIC/AIC 结构评分），并支持 d-分离、模型一致性（checkmodel）等图级检测，让研究者能判断学到的因果结构是否可靠、哪个候选图更优。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "结构对比类（需真实图）：truecausalgraph（DAG/networkx）、estcausalgraph（学到的 DAG）。",
+            "数据契合类（需数据）：X（DataFrame）、causalgraph（待验证的图）、citest（用于隐含 CI 检验）。",
+            "评分类：data + scoringmethod（AIC/BIC/K2/BDeu 等）。"
+          ],
+          "outputs": [
+            "SHD 距离值（标量）。",
+            "邻接/定向混淆矩阵（TP/FP/FN/TN + precision/recall/F1）。",
+            "ImpliedCIs 检验结果（图隐含 CI 的支持/违背统计）。"
+          ],
+          "humanChecks": [
+            "结构对比（SHD/混淆矩阵）还是数据契合（ImpliedCIs/评分）更匹配验证目标。",
+            "SHD 的 edgereversepenalty 是否合理反映定向错误严重性。",
+            "citest 是否匹配数据类型。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "核心处理链",
+          "description": "构建概率图模型，并完成结构学习、推理、因果干预和数据模拟。"
+        }
+      ],
+      "gettingStarted": [
+        "先选择离散或连续图模型",
+        "用官方小样例定义结构和 CPD",
+        "再增加推理、学习或干预"
+      ],
+      "requirements": [
+        "Python",
+        "概率图模型基础",
+        "结构或数据输入"
+      ],
+      "limitations": [
+        "本轮未完成本机运行",
+        "不同模型和估计器依赖差异大",
+        "结构与因果解释需要额外假设"
+      ],
+      "verifiedScope": [
+        "读取 pgmpy/estimators/MLE.py（MaximumLikelihoodEstimator getparameters/estimatecpd 签名）",
+        "读取 pgmpy/estimators/BayesianEstimator.py（BayesianEstimator getparameters/estimatecpd 签名）",
+        "读取 pgmpy/estimators/EM.py（ExpectationMaximization）",
+        "读取 pgmpy/parameterestimator/（discretebayesian/discretemle/discreteem/lineargaussianmle）",
+        "读取 DiscreteBayesianNetwork.py:592 fit / :653 fitupdate 签名",
+        "读取 LinearGaussianBayesianNetwork.py:880 fit 签名",
+        "读取 README Parameter Learning 特性与 example notebooks 主题",
+        "读取 pgmpy/inference/CausalInference.py（CausalInference 类、query(query, do, evidence, adjustmentset, inferencealgo) 签名）"
+      ],
+      "unverifiedScope": [
+        "未运行本机参数学习 smoke",
+        "未验证 BayesianEstimator 各先验类型（BDeu/Dirichlet/K2）的数值差异",
+        "未覆盖 SEMEstimator/IVEstimator 的 SEM 参数估计内部机制（见待复核卡）",
+        "未运行本机因果查询 smoke",
+        "未验证 minimal/all/minimalvariance 三种调整集变体的数值差异",
+        "未覆盖 DoubleMLRegressor/NaiveAdjustmentRegressor/NaiveIVRegressor（因果效应估计的预测回归器，见待复核卡）",
+        "未运行本机模拟 smoke",
+        "未验证 missingprob 的 MAR/MNAR 缺失机制实现细节"
+      ],
+      "researchStages": [
+        "research-design",
+        "data-analysis",
+        "validation"
+      ],
+      "tags": [
+        "概率图模型",
+        "贝叶斯网络",
+        "因果推断"
+      ],
+      "keywords": [
+        "pgmpy",
+        "贝叶斯网络",
+        "do 演算"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-academic-research-skills",
+      "slug": "academic-research-skills",
+      "name": "Academic Research Skills",
+      "oneLiner": "把研究、写作、完整性检查、审稿和修订串成可检查的学术流程。",
+      "summary": "面向 Claude Code 的学术研究 Skill 组合，强调材料护照、阶段合同、引用完整性和审稿修订闭环。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/academic-research-skills",
+      "sourceType": "skill",
+      "source": {
+        "kind": "skill",
+        "url": "https://github.com/Imbad0202/academic-research-skills",
+        "repository": "Imbad0202/academic-research-skills",
+        "version": "e8ad78f43a57794408ae6aa6913acee12f523012",
+        "checkedAt": "2026-06-15",
+        "checksum": "sha256:1656ef6026394450125a1806a8946f3e46001e54f681aabc30f790d8eef4658f"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "CC-BY-NC-4.0",
+        "url": "https://github.com/Imbad0202/academic-research-skills/blob/main/LICENSE"
+      },
+      "maturity": "experimental",
+      "verification": "catalogued",
+      "editorialVerdict": "use-with-caution",
+      "recommendedFor": [
+        "希望搭建完整学术工作流的 Claude Code 用户",
+        "需要材料和引用治理的研究团队"
+      ],
+      "notRecommendedFor": [
+        "需要商业复用上游材料的项目",
+        "希望完全无人值守完成研究的用户"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "claim-ref对齐审计与终端阻断",
+          "description": "把论文中的 claim、引用标记、正文 anchor、文献 corpus、uncited sentence stream 和 Material Passport 策略，转成 claim-ref 对齐结果、未引用断言、claim drift、constraint violation、抽样摘要和终端阻断信号。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "claimintentmanifests[]：写作阶段声明的 claim intent、planned citation、planned experiment id 和约束。",
+            "literaturecorpus[]：带 citation key、metadata、locator 和可选 excerpt 的文献条目。",
+            "正文引用标记和 anchor：resolved citation markers、refslug、句子或段落 anchor。"
+          ],
+          "outputs": [
+            "claimauditresults[]",
+            "uncitedassertions[]",
+            "claimdrifts[]"
+          ],
+          "humanChecks": [
+            "是否启用 ARSCLAIMAUDIT=1。",
+            "是否允许外部 judge model 或 resolver。",
+            "strict terminal policy 是否启用。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "pipeline完整性核验与失败恢复",
+          "description": "把论文草稿、修订稿、引用列表、主张、图表、实验来源、Material Passport 和审稿阶段产物，转成完整性报告、阻断项、修复任务、重验结果、最终提交包 gate 和可追踪失败恢复记录。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "Stage 2 论文草稿、引用列表、方法说明、图表说明、数据或实验来源。",
+            "Stage 4 修订稿、Response to Reviewers、patch apply report、revision delta、新增引用。",
+            "Material Passport：citation verification summary、experiment provenance、claim intent manifest、terminal policies、audit artifacts、version records。"
+          ],
+          "outputs": [
+            "Stage 2.5 Integrity Report。",
+            "Stage 4.5 Final Integrity Report。",
+            "Issue ledger 和 correction list。"
+          ],
+          "humanChecks": [
+            "是否允许调用外部 resolver、plagiarism checker 或 cross-model。",
+            "integrity fail 后选择修复、重验、暂停或终止。",
+            "advisory 是否可接受进入下一阶段。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "pipeline状态追踪与阶段路由",
+          "description": "把用户当前研究任务、已有材料、Material Passport、阶段产物和人工确认，转成可恢复的 pipeline 状态、阶段路由、checkpoint、handoff 包和 reset boundary。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "用户任务：从零研究、继续写作、已有草稿审查、收到审稿意见、格式收口、恢复旧会话。",
+            "已有材料：研究问题、文献 corpus、paper draft、review report、revision roadmap、response letter、Material Passport。",
+            "状态对象：pipeline stage、stage status、loop count、pending decision、checkpoint type、material inventory、integrity history、review history。"
+          ],
+          "outputs": [
+            "起始阶段判断和推荐 mode。",
+            "当前 stage、next stage、blocked reason、required material。",
+            "Checkpoint dashboard 和人工决策项。"
+          ],
+          "humanChecks": [
+            "起始阶段是否判断正确。",
+            "是否允许从已有材料中途进入。",
+            "MANDATORY checkpoint 的继续、修正、暂停或终止选择。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "修订回复与复审闭环",
+          "description": "把 Editorial Decision Package、Revision Roadmap、修订稿、Response to Reviewers 和可选 Material Passport 追踪字段，转成逐点回复、R&R Traceability Matrix、复审验证报告、残留问题和新的接受或修订判断。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "Editorial Decision Package 和 Revision Roadmap。",
+            "academic-paper revision mode 产出的 revised manuscript、patch apply report、Response to Reviewers。",
+            "Schema 8 Response to Reviewers：revisionround、items、summary、wordcountdelta、newreferencesadded、summaryofchanges、newcontenthighlight。"
+          ],
+          "outputs": [
+            "Response to Reviewer Comments。",
+            "Change Log。",
+            "R&R Traceability Matrix。"
+          ],
+          "humanChecks": [
+            "作者是否接受逐点回复格式。",
+            "revisionlocation 是否足够精确。",
+            "未完成项是否允许标为 deliberate limitation。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "全流程学术pipeline调度",
+          "description": "把一个研究者的论文任务定位到合适阶段，并调度 research、write、integrity、review、revise、re-review、finalize 和 process summary，保证每个阶段都有产物、状态、确认点和失败回路。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "用户自然语言任务，例如从零写论文、已有论文需审查、收到审稿意见需修订、只需格式转换。",
+            "已有材料状态：研究问题、文献、草稿、审稿意见、修订稿、最终稿。",
+            "可选环境变量：ARSPASSPORTRESET、resumefrompassport=<hash、ARSCLAIMAUDIT、ARSCROSSMODEL。"
+          ],
+          "outputs": [
+            "当前阶段判定和推荐 mode。",
+            "被调度的 skill 和阶段产物。",
+            "Checkpoint dashboard、mandatory decision、progress status。"
+          ],
+          "humanChecks": [
+            "当前任务是否需要完整 pipeline，还是只用某个子 skill。",
+            "integrity fail 是否修正、重验或暂停。",
+            "审稿结果是接受、修订、重构还是终止。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "分视角论文审查与issue生成",
+          "description": "把已确认的 reviewer configuration、待审论文、reviewer contract 和审查模式，转成 EIC、methodology、domain、perspective 和 devil advocate 的独立审查报告、issue records、dimension scores、问题严重度和作者问题清单。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "已确认的 Field Analysis Report 和 Reviewer Configuration Cards。",
+            "待审论文完整正文、Paper Draft 对象或 pipeline handoff。",
+            "reviewer sprint contract：reviewerfull 或 reviewermethodologyfocus。"
+          ],
+          "outputs": [
+            "EIC Review Report。",
+            "Methodology Review Report。",
+            "Domain Review Report。"
+          ],
+          "humanChecks": [
+            "reviewer configuration 是否已经确认。",
+            "目标期刊和 reviewer role 是否和论文真实语境一致。",
+            "field-norm evidence 是否足以支撑 critical 或 major。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "hook写入范围与仓库安全治理",
+          "description": "解释 academic-research-skills 如何把 Claude Code hook、单阶段 subagent 名称、phase 写入范围、受保护基础设施、仓库安全政策、非商业定位和贡献规则组合成运行时与仓库层安全边界。这个机制不负责生成学术产物，但会决定 agent 能写哪里、哪些能力属于安全报告范围、哪些贡献或使用方式会被拒绝。"
+        },
+        {
+          "id": "mechanism-2",
+          "label": "material-passport与共享合同总图",
+          "description": "解释 academic-research-skills 如何把跨阶段 handoff、Material Passport、passport 子对象、reset boundary、version records、rejection log、terminal policies 和 schema lint 组合成一套共享状态合同。这个机制本身不直接生成论文、综述或审稿报告，但它决定各阶段产物能否被后续 agent 接收、能否断点重启、哪些证据可以继续流转、哪些失败会阻断流程。"
+        },
+        {
+          "id": "mechanism-3",
+          "label": "命令入口与模式路由",
+          "description": "解释 academic-research-skills 如何把用户的 slash command、自然语言意图、Claude Code plugin 安装面和 mode registry 连接到四个顶层 skill。这个机制本身不产出研究、论文或审稿结果，但会决定用户入口进入哪张能力卡、用什么 mode、是否继承会话模型、是否触发状态写入命令，以及哪些安装路径会改变运行边界。"
+        }
+      ],
+      "gettingStarted": [
+        "先阅读许可和定位说明",
+        "选择一个顶层 Skill 做最小任务",
+        "保留材料护照和阶段产物"
+      ],
+      "requirements": [
+        "Claude Code",
+        "能够维护本地研究工作区",
+        "遵守非商业许可边界"
+      ],
+      "limitations": [
+        "本轮只完成源码和合同结构核对",
+        "没有运行完整 pipeline",
+        "许可包含非商业限制"
+      ],
+      "verifiedScope": [
+        "已核对来源定位、公开入口和核心处理链"
+      ],
+      "unverifiedScope": [
+        "尚未完成真实环境运行和大规模输入验证"
+      ],
+      "researchStages": [
+        "orientation",
+        "literature",
+        "research-design",
+        "validation",
+        "writing"
+      ],
+      "tags": [
+        "科研 skill",
+        "学术流程",
+        "引用治理"
+      ],
+      "keywords": [
+        "academic research skills",
+        "claude code 科研",
+        "学术 pipeline"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-agentlaboratory",
+      "slug": "agentlaboratory",
+      "name": "AgentLaboratory",
+      "oneLiner": "用多 Agent 串联文献、计划、实验、论文写作和评审回环。",
+      "summary": "以 YAML 配置启动的自动科研流水线，覆盖从文献综述到实验实现和论文产出的多个阶段。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/agentlaboratory",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/SamuelSchmidgall/AgentLaboratory",
+        "repository": "SamuelSchmidgall/AgentLaboratory",
+        "version": "d9017d90e329112d2a80b7712f37ee9094d2cd27",
+        "checkedAt": "2026-06-16",
+        "checksum": "sha256:fab25ef283ab4b2b95130292080e18d02bd56d43f1b43fc4340a0850a77d2da7"
+      },
+      "license": {
+        "status": "verified",
+        "spdx": "MIT",
+        "url": "https://github.com/SamuelSchmidgall/AgentLaboratory/blob/main/LICENSE"
+      },
+      "maturity": "research",
+      "verification": "catalogued",
+      "editorialVerdict": "worth-watching",
+      "recommendedFor": [
+        "研究自动科研 Agent 架构的开发者",
+        "希望观察多阶段状态如何连接的研究者"
+      ],
+      "notRecommendedFor": [
+        "直接用于高风险研究结论",
+        "缺少外部模型和实验环境的用户"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "AgentRxiv本地论文共享检索",
+          "description": "在本地启动一个 AgentRxiv Flask 服务，把上传或自动生成的 PDF 抽取成文本并存入 SQLite，再用 sentence transformer embedding 做相似度搜索，让后续 agent 在文献综述阶段检索其他 agent 产出的论文全文和摘要。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "agentRxiv 配置开关。",
+            "uploads/ 目录中的 PDF。",
+            "写作阶段生成的 <labdir/tex/temp.pdf。"
+          ],
+          "outputs": [
+            "uploads/<title.pdf",
+            "SQLite Paper 记录。",
+            "AgentRxiv 搜索候选文本。"
+          ],
+          "humanChecks": [
+            "是否允许生成 PDF 进入共享库。",
+            "是否要过滤低质量或未完成论文。",
+            "是否允许后续 agent 引用 agent 生成论文。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "HuggingFace数据准备与提交",
+          "description": "让 ML engineer 和 software engineer 围绕研究计划协作，必要时搜索 HuggingFace 数据集，逐步执行候选数据准备代码，直到 software engineer 提交通过执行检查的最终 loaddata.py。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "研究计划 self.plan。",
+            "文献综述 litreviewsum。",
+            "数据准备 notes。"
+          ],
+          "outputs": [
+            "<labdir/src/loaddata.py",
+            "self.datasetcode",
+            "后续实验代码生成阶段的固定前置代码。"
+          ],
+          "humanChecks": [
+            "数据集是否适配研究问题。",
+            "数据许可证和使用限制。",
+            "是否允许执行数据准备代码。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "arXiv文献检索与综述归档",
+          "description": "让 PhD agent 围绕研究主题反复发出 SUMMARY、FULLTEXT 和 ADDPAPER 命令，从 arXiv 搜索摘要、读取论文全文、选择相关论文，并把达到数量阈值的论文摘要整理成后续计划阶段可用的文献综述。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "研究主题 researchtopic。",
+            "PhD agent 当前历史、phase notes 和已有 litreview。",
+            "arXiv 搜索 query。"
+          ],
+          "outputs": [
+            "self.phd.litreview",
+            "self.referencepapers",
+            "litreviewsum"
+          ],
+          "humanChecks": [
+            "论文是否确实相关。",
+            "摘要是否准确反映全文。",
+            "检索 query 是否覆盖研究主题关键同义词。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "实验代码生成修复与评分",
+          "description": "把数据准备代码、研究计划和文献洞察交给 MLESolver，让模型用 REPLACE 或 EDIT 生成实验代码，先运行代码，再用 LLM reward model 给代码与输出打分，保留最高分代码并写入实验目录。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "datasetcode",
+            "plan",
+            "litreviewsum"
+          ],
+          "outputs": [
+            "<labdir/src/runexperiments.py",
+            "<labdir/src/experimentoutput.log",
+            "self.resultscode"
+          ],
+          "humanChecks": [
+            "是否允许执行模型生成代码。",
+            "reward 分数是否可信。",
+            "输出是否真实覆盖计划中的实验。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "研究计划协作生成",
+          "description": "把文献综述、研究主题和用户 notes 放进 postdoc 与 PhD student 的往返对话，让 postdoc 在有限步数内提交 PLAN，形成后续数据准备、实验执行和论文写作共享的研究计划。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "litreviewsum",
+            "researchtopic",
+            "task-notes 中的 plan-formulation 条目。"
+          ],
+          "outputs": [
+            "self.plan",
+            "所有 agent 的 plan 属性。",
+            "数据准备、实验、结果解释和论文写作的共享上下文。"
+          ],
+          "humanChecks": [
+            "计划是否符合研究主题。",
+            "数据、模型、指标、baseline 和预算是否完整。",
+            "是否允许自由文本计划进入自动代码生成。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "论文写作与LaTeX产物生成",
+          "description": "把研究计划、实验代码、实验输出、结果解释和文献综述交给 PaperSolver，先生成 LaTeX scaffold，再按章节填入正文、相关论文和图表引用，经过编译检查和 LLM 评审评分后，输出报告文本、readme 和可选 PDF。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "self.phd.plan",
+            "self.phd.resultscode",
+            "self.phd.expresults"
+          ],
+          "outputs": [
+            "<labdir/tex/temp.tex",
+            "<labdir/tex/temp.pdf",
+            "<labdir/report.txt"
+          ],
+          "humanChecks": [
+            "论文是否准确反映实验。",
+            "引用是否支持正文主张。",
+            "PDF 是否可传播。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "运行文件合同与外部依赖边界",
+          "description": "这个机制解释 AgentLaboratory 的运行文件、目录、外部 API、代码执行、LaTeX 编译和 AgentRxiv 服务如何共同构成复现边界。它跨越配置调度、数据准备、实验代码、论文写作和 AgentRxiv 本地共享能力。"
+        },
+        {
+          "id": "mechanism-2",
+          "label": "阶段命令协议与状态记忆",
+          "description": "这个机制解释 AgentLaboratory 如何用单命令协议、agent history、phase status、过期上下文和 pickle checkpoint 串联多阶段研究流程。它支撑配置调度、文献综述、计划、数据准备、实验、论文写作和评审回环多张能力卡。"
+        }
+      ],
+      "gettingStarted": [
+        "先阅读示例 YAML 和阶段定义",
+        "只运行一个小型实验配置",
+        "逐阶段检查产物和状态"
+      ],
+      "requirements": [
+        "Python 环境",
+        "外部 LLM",
+        "实验数据与计算环境"
+      ],
+      "limitations": [
+        "本轮未运行真实模型和实验",
+        "checkpoint 恢复链仍需核验",
+        "自动生成结果必须人工审查"
+      ],
+      "verifiedScope": [
+        "读取 AgentRxiv 类的本地 Flask server 启动、搜索和 PDF 缓存逻辑",
+        "读取 app.py 的 PDF 上传、SQLite 入库、embedding 搜索和 API 返回",
+        "读取 literaturereview 和 reportwriting 中的 AgentRxiv 接入点",
+        "读取 HFDataSearch 的数据集检索、过滤和评分逻辑",
+        "读取 SWEngineerAgent 与 MLEngineerAgent 的 data preparation 命令协议",
+        "读取 LaboratoryWorkflow.datapreparation 的代码执行、SEARCHHF 和 SUBMITCODE 分支",
+        "读取 PhDStudentAgent 的文献命令协议",
+        "读取 LaboratoryWorkflow.literaturereview 的 SUMMARY、FULLTEXT 和 ADDPAPER 分支"
+      ],
+      "unverifiedScope": [
+        "未启动 Flask server",
+        "未上传 PDF",
+        "未下载 sentence transformer 模型",
+        "未验证并行 lab 的 AgentRxiv 路径",
+        "未下载 HuggingFace dataset 索引",
+        "未运行模型生成的数据准备代码",
+        "未验证代码安全隔离",
+        "未验证真实 MATH 数据加载"
+      ],
+      "researchStages": [
+        "literature",
+        "research-design",
+        "data-analysis",
+        "validation",
+        "writing"
+      ],
+      "tags": [
+        "自动科研",
+        "多 agent",
+        "实验工作流"
+      ],
+      "keywords": [
+        "agent laboratory",
+        "自动科研 agent",
+        "多 agent 科研"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-ai-researcher",
+      "slug": "ai-researcher",
+      "name": "AI-Researcher",
+      "oneLiner": "围绕机器学习论文完成想法、代码实验、评审修正和论文生成。",
+      "summary": "把参考论文、代码仓、Docker 执行、多 Agent 实验和 LaTeX 写作放进同一套机器学习科研自动化系统。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/ai-researcher",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/HKUDS/AI-Researcher",
+        "repository": "HKUDS/AI-Researcher",
+        "version": "f9a6f8480860c193afff600eeffe3defcee8a978",
+        "checkedAt": "2026-06-16",
+        "checksum": "sha256:eb6e0ced51817bb62af7a0190e018b4f49097585384235a2b47897519f79e83a"
+      },
+      "license": {
+        "status": "not-found",
+        "spdx": null,
+        "url": null
+      },
+      "maturity": "research",
+      "verification": "catalogued",
+      "editorialVerdict": "use-with-caution",
+      "recommendedFor": [
+        "研究机器学习自动科研系统的开发者",
+        "需要比较实验 Agent 机制的研究者"
+      ],
+      "notRecommendedFor": [
+        "商业复制或分发上游内容",
+        "缺少隔离执行环境的用户"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "Level1给定想法到实验实现闭环",
+          "description": "把用户已经给出的机器学习研究 idea、benchmark instance、参考论文和候选代码仓，转成可运行项目、两轮训练测试、评审建议、提交实验结果和后续实验 refinements。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "benchmark instance：benchmark/final/<category/<instanceid.json，包含 sourcepapers、task1 或 task2、目标论文 URL 和 instance id。",
+            "用户给定 idea：runinferplan.main(args, ideas, references) 的 ideas 参数。",
+            "参考论文文本：由 warpsourcepapers 或 Web GUI reference 输入进入。"
+          ],
+          "outputs": [
+            "/{workplacename}/project/ 下的代码、数据处理、训练和测试脚本。",
+            "两轮训练测试的运行结果。",
+            "judge 评审建议和可能的 fullycorrect 状态。"
+          ],
+          "humanChecks": [
+            "是否允许外部模型读取论文、代码和实验结果。",
+            "是否允许 Docker 拉起容器并挂载工作目录。",
+            "GPU、端口、缓存目录和输出目录是否可用。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "Level2参考论文到创新想法实现",
+          "description": "把用户只提供参考论文、没有明确创新 idea 的任务，转成多个候选研究想法、一个精选并细化的 idea、代码实现调查、实验实现、评审修正和实验 refinement。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "benchmark instance：benchmark/final/<category/<instanceid.json。",
+            "参考论文列表：用户输入或 benchmark JSON 中的 sourcepapers。",
+            "类别任务说明：benchmark.process.datasetcandidate.<category.metaprompt 的 TASK 和 dataset 描述。"
+          ],
+          "outputs": [
+            "多个 candidate idea。",
+            "精选和增强后的 idea report。",
+            "code survey implementation report。"
+          ],
+          "humanChecks": [
+            "生成 idea 是否真实新颖，是否和参考论文冲突。",
+            "参考代码和数据集是否允许复用。",
+            "code survey 是否覆盖了 idea 中每个学术概念。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "创新基准数据构建",
+          "description": "把一组论文标题或关键词、PDF 和 LLM 指令模板，转成包含目标论文、source papers、task1、task2、领域元数据和匿名化处理的 innovation benchmark 数据。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "benchmarkcollection/paperstosearch：论文标题或关键词。",
+            "exactmatch：是否精确匹配标题。",
+            "arXiv、Semantic Scholar 和 Crossref API。"
+          ],
+          "outputs": [
+            "papertitles/papertitles.json",
+            "papertitles/pdfs/.pdf",
+            "innovationgraph/innovationgraph.json"
+          ],
+          "humanChecks": [
+            "论文标题和 PDF 是否匹配。",
+            "source paper 是否真的支撑 target task。",
+            "LLM 生成的 task 是否保留作者原意。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "参考论文与代码资源选择下载",
+          "description": "把 benchmark 中的参考论文、日期边界和用户任务，转成一组 reference codebases、reference paths、reference papers，并把被选论文的 arXiv source 下载成本地 TeX 文件。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "metadata[\"sourcepapers\"]：每项包含 reference 和 usage。",
+            "metadata[\"datelimit\"]：来自目标论文 arXiv metadata。",
+            "GitHub token：GITHUBAITOKEN。"
+          ],
+          "outputs": [
+            "referencecodebases",
+            "referencepaths",
+            "referencepapers"
+          ],
+          "humanChecks": [
+            "reference codebases 是否真的对应论文。",
+            "arXiv title 是否匹配正确版本。",
+            "下载的论文 source 是否可用于后续模型调用。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "实验实现评审与迭代修正",
+          "description": "把 ML agent 已经写出的项目、研究 idea、计划、survey notes、训练测试结果和 reference codebases，转成实现审查、修正建议、再次实现、正式提交运行结果、实验分析报告和下一轮实验计划。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "innovative idea 或精选 idea。",
+            "prepare agent 的 reference codebases。",
+            "coding plan 和 model survey notes。"
+          ],
+          "outputs": [
+            "code review report。",
+            "judge fullycorrect 判断和 suggestion。",
+            "修正后的 project/。"
+          ],
+          "humanChecks": [
+            "judge suggestion 是否可信。",
+            "是否继续消耗 GPU 做修正和进一步实验。",
+            "submit 阶段是否允许只改 epochs。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "研究结果到LaTeX论文生成",
+          "description": "把研究领域、instance id、实验项目、agent 输出、benchmark 数据、相关论文和写作模板，转成完整 LaTeX 论文各章节、清理后的引用文件和可尝试编译的论文项目。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "researchfield：例如 vq 或 rec。",
+            "instanceid：目标论文或项目 id。",
+            "agent 输出目录、model 代码目录、project 目录和 benchmark JSON。"
+          ],
+          "outputs": [
+            "methodology.tex",
+            "relatedwork.tex",
+            "experiments.tex"
+          ],
+          "humanChecks": [
+            "论文目标会议和格式是否正确。",
+            "章节是否引用真实实验结果。",
+            "相关工作引用是否可查。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "Docker执行环境与浏览器下载边界",
+          "description": "解释 AI-Researcher 如何把 agent 的文件读写、命令执行、Python 运行、网页下载和数据集准备限制在 Docker workspace 与本地挂载目录之间，以及这个机制有哪些失败边界。"
+        },
+        {
+          "id": "mechanism-2",
+          "label": "MetaChain多agent工具调用与缓存",
+          "description": "解释 AI-Researcher 多张能力卡共享的 agent 运行骨架：模型消息怎样调用工具、工具结果怎样进入上下文、agent 怎样切换、错误怎样留在消息里、缓存怎样影响长流程恢复。"
+        },
+        {
+          "id": "mechanism-3",
+          "label": "基准实例与产物目录状态链",
+          "description": "解释 AI-Researcher 如何把 benchmark instance、dataset candidate、workspace project、paper source、paper agent target sections 和 cache/log 组织成一条产物状态链。"
+        }
+      ],
+      "gettingStarted": [
+        "先核对许可状态",
+        "使用隔离容器阅读示例",
+        "从单个 benchmark 实例开始"
+      ],
+      "requirements": [
+        "Docker",
+        "GPU 或足够计算资源",
+        "外部模型和代码仓"
+      ],
+      "limitations": [
+        "上游仓库未发现明确许可证",
+        "本轮只做静态读取",
+        "浏览器下载和代码执行具有安全风险"
+      ],
+      "verifiedScope": [
+        "README Level 1 usage",
+        "researchagent/runinferplan.py",
+        "researchagent/inno/agents/innoagent/",
+        "researchagent/inno/workflow/flowcache.py",
+        "researchagent/inno/environment/dockerenv.py",
+        "README Level 2 usage",
+        "researchagent/runinferidea.py",
+        "ideaagent and codesurveyagent definitions"
+      ],
+      "unverifiedScope": [
+        "true LLM calls",
+        "Docker execution",
+        "GPU training",
+        "external GitHub and arXiv calls",
+        "generated project correctness",
+        "generated idea novelty",
+        "code survey completeness",
+        "true end to end run"
+      ],
+      "researchStages": [
+        "orientation",
+        "research-design",
+        "data-analysis",
+        "validation",
+        "writing"
+      ],
+      "tags": [
+        "自动科研",
+        "机器学习",
+        "docker"
+      ],
+      "keywords": [
+        "ai researcher",
+        "机器学习科研 agent",
+        "自动实验"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "tool-chatpaper",
+      "slug": "chatpaper",
+      "name": "ChatPaper",
+      "oneLiner": "围绕论文 PDF 完成总结、翻译、审稿和综述草稿。",
+      "summary": "把 arXiv 候选获取、PDF 解析、模型总结、全文翻译和审稿回复封装为脚本与轻量入口。",
+      "websiteUrl": "https://bolaoshi.cn/research-tools/chatpaper",
+      "sourceType": "open-source-repository",
+      "source": {
+        "kind": "github",
+        "url": "https://github.com/kaixindelele/ChatPaper",
+        "repository": "kaixindelele/ChatPaper",
+        "version": "f19b3a4510c24d49a14549a41de4ad4dd32dc6c1",
+        "checkedAt": "2026-06-16",
+        "checksum": "sha256:08963a5d245b9bfc9228bd1fd75834b049ae80d25033d9b1599f956399617733"
+      },
+      "license": {
+        "status": "unclear",
+        "spdx": "CC-BY-NC-ND-4.0",
+        "url": "https://github.com/kaixindelele/ChatPaper/blob/main/LICENSE.md"
+      },
+      "maturity": "experimental",
+      "verification": "catalogued",
+      "editorialVerdict": "use-with-caution",
+      "recommendedFor": [
+        "希望了解论文处理脚本结构的研究者",
+        "需要比较总结、翻译和审稿入口的开发者"
+      ],
+      "notRecommendedFor": [
+        "需要商业改造和再分发的项目",
+        "无法核查模型输出和引用的用户"
+      ],
+      "capabilities": [
+        {
+          "id": "capability-1",
+          "label": "PDF全文翻译与润色",
+          "description": "把一篇本地 PDF 解析为标题、摘要和章节列表，先判断论文领域，再逐段调用 ChatCompletion 做中文翻译或润色，并把结果追加写成 Markdown 全文。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "pdfpath：本地 PDF 文件。",
+            "rootpath：输出 Markdown 所在目录。",
+            "baseurl 和 key：OpenAI 兼容接口地址和 API key。"
+          ],
+          "outputs": [
+            "和 PDF 同名的 Markdown 翻译或润色文件。",
+            "token 使用量日志。"
+          ],
+          "humanChecks": [
+            "翻译是否保留原始术语、公式、引用和章节层级，需要人工目检。",
+            "领域判断错误会影响后续术语表达。",
+            "若要复用为正式论文翻译，需要补术语表和格式校验。"
+          ]
+        },
+        {
+          "id": "capability-2",
+          "label": "PDF章节解析与三段式论文总结",
+          "description": "把本地 PDF 或 arXiv 下载后的 PDF 解析成标题、摘要、章节和正文片段，再分三次调用 ChatCompletion，生成面向论文初筛的固定格式总结、方法说明和结论评价。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "本地 PDF 文件或目录。",
+            "可选 arXiv 查询和摘要关键词过滤结果。",
+            "apikey.ini 或环境变量中的 OpenAI key。"
+          ],
+          "outputs": [
+            "export/ 下的 Markdown 或 TXT 总结文件。",
+            "终端日志中的 token、响应时间和模型输出。"
+          ],
+          "humanChecks": [
+            "输出能否用于精读决策，需要人工确认。",
+            "总结中的方法、数值和 Github 链接需要回原文复核。",
+            "本地复用前需要确认 OpenAI key、代理、模型和许可证边界。"
+          ]
+        },
+        {
+          "id": "capability-3",
+          "label": "arXiv近期论文搜索下载与候选筛选",
+          "description": "把用户关键词、页数、时间窗口和结果数量转成 arXiv 网页搜索请求，按提交日期筛出近期论文，再下载 PDF 并构造待总结的 Paper 对象列表。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "query：arXiv 搜索关键词。",
+            "pagenum：读取搜索页数，每页固定按 arXiv 网页 size=50。",
+            "days：只保留最近几天提交的论文。"
+          ],
+          "outputs": [
+            "本地 pdffiles/ 下的 PDF 文件。",
+            "Paper 对象列表。",
+            "后续 summarywithchat 的输入。"
+          ],
+          "humanChecks": [
+            "用户需要确认关键词、时间窗口和结果数量是否符合调研目标。",
+            "下载后的 PDF 是否真的属于目标主题，需要人工或后续质量门复核。",
+            "若用于研究证据池，需要补 DOI、版本、撤稿和来源质量检查。"
+          ]
+        },
+        {
+          "id": "capability-4",
+          "label": "审稿回复草拟",
+          "description": "把审稿意见文本读入模型，要求模型逐条抽取审稿人 concern，并以作者口吻生成点对点回复草稿，最后写入 response 文件。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "commentpath：审稿意见文本文件。",
+            "fileformat：输出格式后缀。",
+            "language：输出语言。"
+          ],
+          "outputs": [
+            "responsefile/ 下的审稿回复草稿。",
+            "终端中的 token 用量和模型输出。"
+          ],
+          "humanChecks": [
+            "每条回复是否对应真实修改。",
+            "是否需要补充图表、实验或文字修订位置。",
+            "是否符合目标期刊或会议 rebuttal 格式。"
+          ]
+        },
+        {
+          "id": "capability-5",
+          "label": "审稿意见生成",
+          "description": "把一篇论文 PDF 解析成标题、摘要、引言、结论和少量关键章节，先让模型选择最多两个需要补读的章节，再生成包含总体评价、优点、弱点、问题和分数的审稿意见。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "paperpath：单个 PDF 或包含 PDF 的目录。",
+            "researchfields：审稿领域。",
+            "language：输出语言。"
+          ],
+          "outputs": [
+            "outputfile/ 下的审稿意见文本。",
+            "终端中的 token 用量、响应时间和模型输出。"
+          ],
+          "humanChecks": [
+            "审稿意见是否真实、准确、公平，需要人工逐条对照论文。",
+            "是否可以用于正式审稿，需要人工按伦理和期刊规范判断。",
+            "任何分数和接收倾向都不应自动采用。"
+          ]
+        },
+        {
+          "id": "capability-6",
+          "label": "文献综述草稿生成",
+          "description": "把一个研究主题标题转成关键词、参考文献候选、可选领域知识和论文组成部分，再生成 related works 类综述章节、Markdown 中文稿和压缩包。",
+          "evidenceLevel": "source-reviewed",
+          "inputs": [
+            "title：目标综述或研究主题。",
+            "template：LaTeX 模板。",
+            "maxkwrefs、bibrefs、maxtokensref：参考文献候选和 prompt 预算。"
+          ],
+          "outputs": [
+            "模板目录中的 section .tex。",
+            "survey.md 和 surveychinese.md。",
+            "bibtex 文件。"
+          ],
+          "humanChecks": [
+            "参考文献是否相关、可靠、去重，需要人工或后续候选对象质量门复核。",
+            "草稿中的每个引用是否真的支持对应句子，需要人工核对。",
+            "中文稿是否保留 citation 和术语一致性，需要人工目检。"
+          ]
+        }
+      ],
+      "mechanisms": [
+        {
+          "id": "mechanism-1",
+          "label": "多入口LLM论文处理骨架",
+          "description": "解释 ChatPaper 多个脚本怎样共享一套“材料进入、章节或评论抽取、LLM 处理、文件落盘”的骨架，同时在论文总结、翻译、审稿、审稿回复和综述草稿中分化出不同产物。"
+        }
+      ],
+      "gettingStarted": [
+        "先阅读许可证和配置文件",
+        "只处理可合法使用的论文",
+        "抽查总结、翻译和引用"
+      ],
+      "requirements": [
+        "Python",
+        "外部 LLM API",
+        "PDF 解析环境"
+      ],
+      "limitations": [
+        "许可包含非商业和禁止演绎限制",
+        "本轮未调用真实模型",
+        "综述草稿不能代替证据矩阵"
+      ],
+      "verifiedScope": [
+        "读取 README 的 PDF 全文翻译配置教程",
+        "读取 chattranslate.py 的 scipdf 解析、领域判断、章节翻译和 Markdown 写入路径",
+        "读取 README 的论文总结技术原理和本地 PDF 总结命令",
+        "读取 chatpaper.py 的 Paper 解析、Reader.summarywithchat 和三类 chat 调用",
+        "读取 README 中 arXiv 批量搜索命令和参数说明",
+        "读取 chatarxiv.py 的网页检索、日期过滤、PDF 下载和 Paper 对象构造路径",
+        "读取 ChatReviewerAndResponse/chatresponse.py",
+        "核验 commentpath 到 responsefile 的主路径"
+      ],
+      "unverifiedScope": [
+        "未启动 GROBID 或 scipdf 服务",
+        "未调用 OpenAI API",
+        "未验证长章节切分效果",
+        "未运行 PyMuPDF 解析 demo.pdf",
+        "未验证输出 Markdown 格式",
+        "未真实请求 arXiv 搜索页",
+        "未下载 PDF",
+        "未验证搜索页 HTML 结构在当前日期是否兼容"
+      ],
+      "researchStages": [
+        "literature",
+        "writing"
+      ],
+      "tags": [
+        "论文阅读",
+        "翻译",
+        "审稿"
+      ],
+      "keywords": [
+        "chatpaper",
+        "ai 论文总结",
+        "论文翻译"
+      ],
+      "publishedAt": "2026-07-11",
+      "updatedAt": "2026-07-11"
+    }
+  ]
+}

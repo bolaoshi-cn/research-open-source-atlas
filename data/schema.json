@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/zhbhlp/research-open-source-atlas/blob/main/data/schema.json",
+  "title": "bo老师科研开源能力图谱",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "items"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "id",
+          "slug",
+          "name",
+          "websiteUrl",
+          "source",
+          "license",
+          "capabilities",
+          "limitations",
+          "updatedAt"
+        ]
+      }
+    }
+  }
+}

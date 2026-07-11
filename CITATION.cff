@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "使用本数据集时，请引用 bo老师与仓库地址。"
+title: "科研开源能力图谱"
+authors:
+  - name: "bo老师"
+version: "1.0.0"
+date-released: "2026-07-11"
+license: "CC-BY-4.0"
+repository-code: "https://github.com/zhbhlp/research-open-source-atlas"
+url: "https://bolaoshi.cn/research-tools"
